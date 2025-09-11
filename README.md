@@ -4,9 +4,10 @@ This sample app renders an optimized route (jobs-only VRP) from a **NextBillion*
 
 ## What this includes
 - **FastAPI backend**
-  - `GET /api/summary` — high-level stats
-  - `GET /api/routes` — GeoJSON (LineString per route + Point per step)
-  - `GET /api/raw` — raw NextBillion response
+  - `GET /api/summary` — high-level stats (supports `?version=` or `?file=`)
+  - `GET /api/routes` — GeoJSON (LineString per route + Point per step) (supports `?version=` or `?file=`)
+  - `GET /api/raw` — raw NextBillion response (supports `?version=` or `?file=`)
+  - `GET /api/data-files` — list available data files and the current default
   - Serves the static frontend at `/`
 - **Frontend** (vanilla HTML/JS)
   - Paste your TomTom API key at the top bar and click **Load**
@@ -21,7 +22,11 @@ uvicorn app.main:app --reload
 ```
 Then open http://127.0.0.1:8000/ and enter your **TomTom API key**.
 
-> Your sample NextBillion response is embedded at `backend/data/nextbillion_response.json`. Replace it with your own anytime.
+> Data files
+> - Place one or more files under `backend/data/` named `nextbillion_response.json`, `nextbillion_response_1.json`, `nextbillion_response_2.json`, ...
+> - By default, the server auto-selects the latest numbered file (highest suffix). If none exist, it falls back to the base `nextbillion_response.json`.
+> - Override selection via query params, e.g. `GET /api/summary?version=2` or `GET /api/routes?file=nextbillion_response_2.json`.
+> - You can also set `DATA_FILE` env var to force a specific file.
 
 ## Notes
 - NextBillion step locations are `[lat, lon]`. We convert to `[lon, lat]` for GeoJSON/TomTom.
@@ -57,7 +62,10 @@ tomtom_fastapi_route_app/
 │  │  ├─ main.py
 │  │  └─ utils.py
 │  ├─ data/
-│  │  └─ nextbillion_response.json
+│  │  ├─ nextbillion_response.json (optional)
+│  │  ├─ nextbillion_response_1.json
+│  │  ├─ nextbillion_response_2.json
+│  │  └─ ...
 │  └─ requirements.txt
 └─ frontend/
    └─ index.html

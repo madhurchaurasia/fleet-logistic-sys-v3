@@ -1,15 +1,18 @@
 
-from fastapi import FastAPI, Response, Query
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi import FastAPI, Response, Query, HTTPException
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import json, os, re, glob
 from .utils import nb_to_geojson, summarize
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 DATA_DIR = os.path.join(ROOT, "data")
+FRONTEND_PATH = os.path.join(os.path.dirname(ROOT), "frontend")
 
 _FILENAME_BASE = "nextbillion_response"
 _FILENAME_REGEX = re.compile(rf"^{re.escape(_FILENAME_BASE)}(?:_(\d+))?\.json$")
+
+_DATA_CACHE: dict[str, tuple[float, dict]] = {}
 
 def _list_data_files():
     files = []
@@ -19,42 +22,54 @@ def _list_data_files():
         if m:
             ver = int(m.group(1)) if m.group(1) else 0
             files.append({"name": name, "version": ver, "path": path})
-    files.sort(key=lambda x: x["version"])  # ascending
+    files.sort(key=lambda x: x["version"])  # ascending by version
     return files
 
 def _resolve_data_path(version: int | None = None, file: str | None = None) -> str:
-    # 1) explicit file query param
+    # Explicit file name (must exist under DATA_DIR)
     if file:
         safe_name = os.path.basename(file)
         candidate = os.path.join(DATA_DIR, safe_name)
-        if os.path.commonpath([DATA_DIR, os.path.realpath(candidate)]) != DATA_DIR:
+        if not candidate.startswith(DATA_DIR):
             raise FileNotFoundError("Invalid file path")
         if os.path.exists(candidate):
             return candidate
         raise FileNotFoundError(f"Data file not found: {safe_name}")
-    # 2) explicit version query param
     files = _list_data_files()
+    # Explicit version
     if version is not None:
         for f in files:
             if f["version"] == version:
                 return f["path"]
         raise FileNotFoundError(f"Version not found: {version}")
-    # 3) env var
+    # Env var override
     env_data_file = os.getenv("DATA_FILE")
     if env_data_file:
         env_path = env_data_file if os.path.isabs(env_data_file) else os.path.join(DATA_DIR, env_data_file)
         if os.path.exists(env_path):
             return env_path
-    # 4) latest numbered if available, else base
+    # Latest numbered (or base file if present)
     if files:
         return files[-1]["path"]
-    # fallback to base name
-    fallback = os.path.join(DATA_DIR, f"{_FILENAME_BASE}.json")
-    if os.path.exists(fallback):
-        return fallback
+    base = os.path.join(DATA_DIR, f"{_FILENAME_BASE}.json")
+    if os.path.exists(base):
+        return base
     raise FileNotFoundError("No data files found")
 
-FRONTEND_PATH = os.path.join(os.path.dirname(ROOT), "frontend")
+def _load_json(path: str) -> dict:
+    try:
+        mtime = os.path.getmtime(path)
+        cached = _DATA_CACHE.get(path)
+        if cached and cached[0] == mtime:
+            return cached[1]
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _DATA_CACHE[path] = (mtime, data)
+        return data
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Data file not found: {os.path.basename(path)}")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON in {os.path.basename(path)}: {str(e)}")
 
 app = FastAPI(title="TomTom Route Viewer", version="1.0.0")
 
@@ -76,34 +91,31 @@ def favicon():
 @app.get("/api/summary")
 def api_summary(version: int | None = Query(default=None), file: str | None = Query(default=None)):
     path = _resolve_data_path(version=version, file=file)
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_json(path)
     return JSONResponse(summarize(data))
 
 @app.get("/api/routes")
 def api_routes(version: int | None = Query(default=None), file: str | None = Query(default=None)):
     path = _resolve_data_path(version=version, file=file)
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_json(path)
     geo = nb_to_geojson(data)
     return JSONResponse(geo)
 
 @app.get("/api/raw")
 def api_raw(version: int | None = Query(default=None), file: str | None = Query(default=None)):
     path = _resolve_data_path(version=version, file=file)
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_json(path)
     return JSONResponse(data)
 
 @app.get("/api/data-files")
 def api_data_files():
     files = _list_data_files()
-    default_path = None
     try:
         default_path = _resolve_data_path()
+        default_name = os.path.basename(default_path)
     except FileNotFoundError:
-        default_path = None
+        default_name = None
     return JSONResponse({
         "files": [{"name": f["name"], "version": f["version"]} for f in files],
-        "default": os.path.basename(default_path) if default_path else None,
+        "default": default_name,
     })

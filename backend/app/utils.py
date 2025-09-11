@@ -1,6 +1,5 @@
 
 from typing import Any, Dict, List
-import copy
 
 def _decode_polyline(s: str, precision: int = 5) -> List[List[float]]:
     """Decode an encoded polyline string into a list of [lon, lat].
