@@ -1,0 +1,449 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TomTom Route Viewer</title>
+  <!-- Self-hosted TomTom SDK only (no external CDNs) -->
+  <script>
+    // Only load from local static files under /static/vendor/tomtom
+    function loadScript(src){
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.async = true; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    function loadCss(href){
+      return new Promise((resolve) => {
+        const l = document.createElement('link');
+        l.rel = 'stylesheet'; l.href = href; l.onload = resolve; l.onerror = resolve;
+        document.head.appendChild(l);
+      });
+    }
+    async function ensureTomTomSDK(){
+      if(window.tt) return 'existing';
+      // Local static copy (place files under frontend/vendor/tomtom)
+      try{
+        await loadCss('/static/vendor/tomtom/maps.css');
+        await loadScript('/static/vendor/tomtom/maps-web.min.js');
+        if(window.tt) return 'local';
+      }catch(e){ /* continue */ }
+      throw new Error('TomTom SDK local files not found. Place maps-web.min.js and maps.css under frontend/vendor/tomtom/.');
+    }
+    window.ensureTomTomSDK = ensureTomTomSDK;
+  </script>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    header{padding:12px 16px;border-bottom:1px solid #eee;display:flex;gap:12px;align-items:center}
+    #map{position:absolute;top:64px;bottom:0;width:100%}
+    .panel{display:flex;gap:8px;align-items:center}
+    .badge{padding:2px 8px;border-radius:999px;background:#efefef;font-size:12px}
+    .card{position:absolute;top:72px;left:12px;background:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.12);max-width:360px}
+    .list{max-height:40vh;overflow:auto;margin-top:8px}
+    .step{padding:6px 4px;border-bottom:1px dashed #eee;font-size:13px}
+    .foot{font-size:12px;color:#666;margin-top:8px}
+    .legend{position:absolute;top:72px;right:12px;background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.12);min-width:160px}
+    .legend-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+    .swatch{width:12px;height:12px;border-radius:2px;border:1px solid #ccc}
+  </style>
+</head>
+<body>
+<header>
+  <strong>TomTom Route Viewer</strong>
+  <div class="panel">
+    <label>TomTom API Key:</label>
+    <input id="apiKey" placeholder="TT_API_KEY" value="" style="width:260px;padding:6px 8px"/>
+    <button id="loadBtn">Load</button>
+    <span id="meta" class="badge">—</span>
+    <select id="routeSelect" class="badge" style="margin-left:8px"></select>
+    <label class="badge" style="display:flex;align-items:center;gap:4px;cursor:pointer">
+      <input type="checkbox" id="debugShowAll" /> All points
+    </label>
+    <button id="clearKeyBtn" title="Clear stored key">Clear</button>
+  </div>
+</header>
+<div id="map"></div>
+<div class="card" id="info" hidden>
+  <div><strong>Route</strong> <span id="routeMeta" class="badge"></span></div>
+  <div class="list" id="steps"></div>
+  <div class="foot">Click markers to focus. Data from NextBillion; rendered via TomTom.</div>
+</div>
+<div class="legend" id="legend" hidden></div>
+
+  <script>
+  (async function(){
+  let sdkSource = 'primary';
+  if(window.ensureTomTomSDK){
+    try { sdkSource = await window.ensureTomTomSDK(); }
+    catch(e){ console.error(e); alert('Failed to load TomTom SDK. See console for details.'); }
+  }
+  const summary = await fetch('/api/summary').then(r => r.json());
+  document.getElementById('meta').textContent = `routes: ${summary.routes_count} | deliveries: ${summary?.summary?.delivery?.[0] ?? '-'} pcs`;
+  const routeSelect = document.getElementById('routeSelect');
+  const debugShowAll = document.getElementById('debugShowAll');
+  routeSelect.innerHTML = '';
+  summary.vehicles?.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = `${i+1}: ${v}`;
+    routeSelect.appendChild(opt);
+  });
+  // restore selected route if persisted
+  try{
+    const savedIdx = localStorage.getItem('TT_SELECTED_ROUTE');
+    if(savedIdx !== null && routeSelect.querySelector(`option[value="${savedIdx}"]`)){
+      routeSelect.value = savedIdx;
+    }
+  }catch{}
+
+  let map, markers = [], routeLayers = [];
+  let apiKeyGlobal = '';
+  async function boot(apiKey){
+    if(!apiKey){ alert('Enter your TomTom API key'); return; }
+    // Store key and mask field
+    try{ localStorage.setItem('TT_API_KEY', apiKey); }catch{}
+    const apiKeyEl = document.getElementById('apiKey');
+    apiKeyEl.type = 'password';
+    apiKeyEl.value = apiKey;
+    apiKeyGlobal = apiKey;
+    tt.setProductInfo("RouteViewer","1.0.0");
+    map = tt.map({
+      key: apiKey,
+      container: 'map',
+      dragPan: true,
+      zoom: 10,
+      center: [28.0473, -26.171] // Johannesburg-ish fallback
+    });
+    // Expose for console debugging: use window._ttMap in DevTools
+    try { window._ttMap = map; } catch(e) {}
+    map.addControl(new tt.NavigationControl());
+
+    // Load routes as GeoJSON
+    const geo = await fetch('/api/routes').then(r => r.json());
+    // Build fallback LineStrings from step Points ordered by location_index
+    function buildFallbackLines(fc){
+      const byRoute = new Map();
+      for(const f of (fc.features||[])){
+        if(f.geometry?.type === 'Point'){
+          const ri = f.properties?.route_index;
+          const li = f.properties?.location_index ?? 0;
+          if(ri == null) continue;
+          if(!byRoute.has(ri)) byRoute.set(ri, []);
+          byRoute.get(ri).push({ li: Number(li), coord: f.geometry.coordinates });
+        }
+      }
+      const features = [];
+      for(const [ri, arr] of byRoute.entries()){
+        arr.sort((a,b)=>a.li-b.li);
+        const coords = arr.map(x=>x.coord).filter(Array.isArray);
+        if(coords.length >= 2){
+          features.push({ type:'Feature', geometry:{ type:'LineString', coordinates: coords }, properties:{ route_index: ri, source:'fallback-sequence' } });
+        }
+      }
+      return { type:'FeatureCollection', features };
+    }
+    const hasValidServerLines = (geo.features||[]).some(f => f.geometry?.type==='LineString' && Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length>=2);
+    const fallbackLines = hasValidServerLines ? null : buildFallbackLines(geo);
+    console.log('[lines] server valid:', hasValidServerLines, 'fallback lines:', fallbackLines?.features?.length||0);
+
+    function addOrUpdateLayers() {
+      // Add the entire FeatureCollection as a source
+      if(map.getSource('routes')){
+        map.getSource('routes').setData(geo);
+      } else {
+        map.addSource('routes', { type: 'geojson', data: geo });
+      }
+      // Add line layers: all routes dimmed + selected route highlighted
+      const routeColors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628'];
+      if(!map.getLayer('route-lines-all')) map.addLayer({
+        id: 'route-lines-all',
+        type: 'line',
+        source: 'routes',
+        filter: ['==', ['geometry-type'], 'LineString'],
+        paint: {
+          'line-width': 3,
+          'line-opacity': 0.85,
+          'line-color': ['match', ['get','route_index'], 0, routeColors[0], 1, routeColors[1], 2, routeColors[2], 3, routeColors[3], 4, routeColors[4], routeColors[5]]
+        }
+      });
+      if(!map.getLayer('route-lines-selected')) map.addLayer({
+        id: 'route-lines-selected',
+        type: 'line',
+        source: 'routes',
+        filter: ['all', ['==', ['geometry-type'], 'LineString'], ['==', ['get','route_index'], 0]],
+        paint: {
+          'line-width': 6,
+          'line-opacity': 1,
+          'line-blur': 0.2,
+          'line-color': ['match', ['get','route_index'], 0, routeColors[0], 1, routeColors[1], 2, routeColors[2], 3, routeColors[3], 4, routeColors[4], routeColors[5]]
+        }
+      });
+
+      // Fallback derived lines (if server LineStrings are missing/empty)
+      if(fallbackLines && (fallbackLines.features?.length || 0) > 0){
+        if(map.getSource('fallback-lines')){
+          map.getSource('fallback-lines').setData(fallbackLines);
+        } else {
+          map.addSource('fallback-lines', { type:'geojson', data: fallbackLines });
+        }
+        if(!map.getLayer('fallback-lines-all')) map.addLayer({
+          id: 'fallback-lines-all', type:'line', source:'fallback-lines',
+          layout: { 'line-cap':'round', 'line-join':'round' },
+          paint: {
+            'line-width': 3,
+            'line-opacity': 0.85,
+            'line-color': ['match', ['get','route_index'], 0, routeColors[0], 1, routeColors[1], 2, routeColors[2], 3, routeColors[3], 4, routeColors[4], routeColors[5]]
+          }
+        });
+        if(!map.getLayer('fallback-lines-selected')) map.addLayer({
+          id: 'fallback-lines-selected', type:'line', source:'fallback-lines',
+          filter: ['==', ['get','route_index'], 0],
+          layout: { 'line-cap':'round', 'line-join':'round' },
+          paint: {
+            'line-width': 6,
+            'line-opacity': 1,
+            'line-blur': 0.2,
+            'line-color': ['match', ['get','route_index'], 0, routeColors[0], 1, routeColors[1], 2, routeColors[2], 3, routeColors[3], 4, routeColors[4], routeColors[5]]
+          }
+        });
+      }
+
+      // Add circle layer for step points
+      if(!map.getLayer('route-points')) map.addLayer({
+        id: 'route-points',
+        type: 'circle',
+        source: 'routes',
+        filter: ['all', ['==', ['geometry-type'], 'Point'], ['==', ['get','route_index'], 0]],
+        paint: {
+          'circle-radius': 6,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#ffffff',
+          'circle-color': ['match', ['get','route_index'], 0, routeColors[0], 1, routeColors[1], 2, routeColors[2], 3, routeColors[3], 4, routeColors[4], routeColors[5]]
+        }
+      });
+
+      // Focus point overlay (single feature)
+      if(!map.getSource('focus-point')){
+        map.addSource('focus-point', { type: 'geojson', data: { type:'FeatureCollection', features: [] } });
+      }
+      if(!map.getLayer('focus-point')){
+        map.addLayer({
+          id: 'focus-point',
+          type: 'circle',
+          source: 'focus-point',
+          paint: {
+            'circle-radius': 9,
+            'circle-color': '#FFD400',
+            'circle-stroke-color': '#000',
+            'circle-stroke-width': 2
+          }
+        });
+      }
+
+      // Fit map to selected route
+      const bbox = getBBoxForRoute(geo, Number(routeSelect.value||0));
+      if(bbox){ map.fitBounds(bbox, { padding: 60 }); }
+
+      // Build steps list for selected route (default 0)
+      const stepsEl = document.getElementById('steps');
+      function humanize(sec){
+        const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+        return [h?`${h}h`:null, m?`${m}m`:null, s?`${s}s`:null].filter(Boolean).join(' ');
+      }
+      async function reverseGeocode(lat, lon){
+        try{
+          const url = `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lon}.json?key=${encodeURIComponent(apiKeyGlobal)}&radius=50`;
+          const r = await fetch(url);
+          if(!r.ok) return null;
+          const j = await r.json();
+          return j?.addresses?.[0]?.address?.freeformAddress || null;
+        }catch{ return null; }
+      }
+
+      function setFocus(lng, lat){
+        const fc = { type:'FeatureCollection', features:[{ type:'Feature', geometry:{ type:'Point', coordinates:[lng,lat] }, properties:{} }]};
+        const src = map.getSource('focus-point');
+        if(src && src.setData){ src.setData(fc); }
+      }
+
+      function ensureLayersPresent(){
+        if(!map.getSource('routes') || !map.getLayer('route-lines-all') || !map.getLayer('route-lines-selected') || !map.getLayer('route-points')){
+          addOrUpdateLayers();
+        }
+      }
+
+      function renderRoute(idx){
+        ensureLayersPresent();
+        stepsEl.innerHTML = '';
+        const steps = geo.features.filter(f => f.geometry.type === 'Point' && f.properties.route_index === idx);
+        console.log('[renderRoute] idx=', idx, 'pointsForRoute=', steps.length);
+        const meta = geo.features.find(f => f.geometry.type==='LineString' && f.properties.route_index===idx)?.properties;
+        document.getElementById('routeMeta').textContent = meta ? `vehicle: ${meta.vehicle} | duration: ${humanize(meta.duration||0)}` : '';
+        for(const s of steps){
+          const div = document.createElement('div');
+          div.className = 'step';
+          const [lng, lat] = s.geometry.coordinates;
+          div.textContent = `${s.properties.step_type || 'step'} — ${lat.toFixed(5)}, ${lng.toFixed(5)} ${s.properties.id ? '('+s.properties.id+')':''}`;
+          div.onclick = async () => {
+            setFocus(lng, lat);
+            map.flyTo({ center: [lng, lat], zoom: 13 });
+            const name = await reverseGeocode(lat, lng);
+            if(name){ div.textContent = `${s.properties.step_type || 'step'} — ${lat.toFixed(5)}, ${lng.toFixed(5)} ${s.properties.id ? '('+s.properties.id+')':''} • ${name}`; }
+          };
+          stepsEl.appendChild(div);
+        }
+        // Filter visible features to selected route
+        if(map.getLayer('route-points')){
+          if (debugShowAll && debugShowAll.checked) {
+            map.setFilter('route-points', ['==', ['geometry-type'], 'Point']);
+          } else if(steps.length > 0){
+            map.setFilter('route-points', ['all', ['==', ['geometry-type'], 'Point'], ['==', ['get','route_index'], idx]]);
+          } else {
+            console.warn('[renderRoute] No points for route', idx, '— showing all points');
+            map.setFilter('route-points', ['==', ['geometry-type'], 'Point']);
+          }
+        }
+        if(map.getLayer('route-lines-selected')){
+          map.setFilter('route-lines-selected', ['all', ['==', ['geometry-type'], 'LineString'], ['==', ['get','route_index'], idx]]);
+        }
+        if(map.getLayer('fallback-lines-selected')){
+          map.setFilter('fallback-lines-selected', ['==', ['get','route_index'], idx]);
+        }
+        const rb = getBBoxForRoute(geo, idx);
+        if(rb){ map.fitBounds(rb, { padding: 60 }); }
+        try{ localStorage.setItem('TT_SELECTED_ROUTE', String(idx)); }catch{}
+      }
+      renderRoute(Number(routeSelect.value||0));
+      document.getElementById('info').hidden = false;
+
+      // Update on select change
+      routeSelect.onchange = () => renderRoute(Number(routeSelect.value||0));
+      if (debugShowAll) debugShowAll.onchange = () => renderRoute(Number(routeSelect.value||0));
+
+      // Surface tile/auth errors
+      map.on('error', (e) => {
+        const msg = String(e?.error?.message || e?.error || 'Map error');
+        if(/401|403/.test(msg)){
+          alert('TomTom tiles failed (401/403). Check API key permissions and allowed domains for localhost/127.0.0.1.');
+        } else {
+          console.warn('Map error:', e);
+        }
+      });
+      // Click on step points to focus
+      try{
+        map.off('click', 'route-points', ()=>{}); // no-op to clear duplicates safely
+      }catch{}
+      map.on('click', 'route-points', (e) => {
+        const f = e.features && e.features[0];
+        if(!f) return;
+        const [lng, lat] = f.geometry.coordinates;
+        map.flyTo({ center: [lng, lat], zoom: 13 });
+      });
+    }
+
+    // Ensure layers are added after the style is truly ready
+    let layersAdded = false;
+    const safeAddLayers = () => { if(layersAdded) return; layersAdded = true; addOrUpdateLayers(); };
+    if (typeof map.isStyleLoaded === 'function' ? map.isStyleLoaded() : map.loaded()) {
+      // style is already loaded
+      safeAddLayers();
+    } else {
+      map.once('load', safeAddLayers);
+    }
+  }
+
+  function getBBox(geo){
+    if(!geo?.features?.length) return null;
+    let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+    for(const f of geo.features){
+      if(f.geometry.type === 'Point'){
+        const [x,y] = f.geometry.coordinates;
+        minX = Math.min(minX, x); minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+      } else if(f.geometry.type === 'LineString'){
+        for(const [x,y] of f.geometry.coordinates){
+          minX = Math.min(minX, x); minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    return [[minX, minY], [maxX, maxY]];
+  }
+  function getBBoxForRoute(geo, idx){
+    const feats = geo?.features?.filter(f => (f.geometry.type==='LineString' || f.geometry.type==='Point') && f.properties?.route_index===idx) || [];
+    if(!feats.length) return null;
+    let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+    for(const f of feats){
+      if(f.geometry.type==='Point'){
+        const [x,y]=f.geometry.coordinates;
+        minX=Math.min(minX,x); minY=Math.min(minY,y);
+        maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);
+      } else if(f.geometry.type==='LineString'){
+        for(const [x,y] of f.geometry.coordinates){
+          minX=Math.min(minX,x); minY=Math.min(minY,y);
+          maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);
+        }
+      }
+    }
+    return [[minX,minY],[maxX,maxY]];
+  }
+  
+
+  document.getElementById('loadBtn').onclick = () => {
+    const key = document.getElementById('apiKey').value.trim();
+    boot(key);
+  };
+  // Pressing Enter in the API key field triggers Load
+  document.getElementById('apiKey').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') document.getElementById('loadBtn').click();
+  });
+  // Restore stored key (masked), do not auto-load
+  try{
+    const saved = localStorage.getItem('TT_API_KEY');
+    if(saved){ const el = document.getElementById('apiKey'); el.type = 'password'; el.value = saved; }
+  }catch{}
+  // Clear key button
+  document.getElementById('clearKeyBtn').onclick = () => {
+    try{ localStorage.removeItem('TT_API_KEY'); }catch{}
+    const el = document.getElementById('apiKey');
+    el.type = 'text'; el.value = '';
+  };
+  if(sdkSource && sdkSource !== 'primary'){
+    const badge = document.getElementById('meta');
+    badge.textContent += ` | sdk: ${sdkSource}`;
+  }
+  // Build color legend (vehicle → color)
+  const legend = document.getElementById('legend');
+  const routeColors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628'];
+      legend.innerHTML='';
+      (summary.vehicles||[]).forEach((v, i) => {
+        const row = document.createElement('div');
+        row.className='legend-row';
+        const sw = document.createElement('span'); sw.className='swatch'; sw.style.background = routeColors[i % routeColors.length];
+        const txt = document.createElement('span'); txt.textContent = v;
+        row.appendChild(sw); row.appendChild(txt);
+        legend.appendChild(row);
+      });
+      legend.hidden = false;
+
+  // Click on step points to focus and reverse geocode
+  try{
+    map.on('click', 'route-points', async (e) => {
+      const f = e.features && e.features[0];
+      if(!f) return;
+      const [lng, lat] = f.geometry.coordinates;
+      if(map.getSource('focus-point')){
+        const fc = { type:'FeatureCollection', features:[{ type:'Feature', geometry:{ type:'Point', coordinates:[lng,lat] }, properties:{} }]};
+        map.getSource('focus-point').setData(fc);
+      }
+      map.flyTo({ center: [lng, lat], zoom: 13 });
+      const name = await (async()=>{ try{ const u = `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${encodeURIComponent(apiKeyGlobal)}&radius=50`; const r = await fetch(u); if(!r.ok) return null; const j=await r.json(); return j?.addresses?.[0]?.address?.freeformAddress||null; }catch{return null;} })();
+      if(name){ new tt.Popup({ closeButton: true }).setLngLat([lng,lat]).setHTML(name).addTo(map); }
+    });
+  }catch{}
+})();
+</script>
+</body>
+</html>
