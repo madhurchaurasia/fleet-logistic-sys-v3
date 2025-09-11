@@ -1,6 +1,3 @@
-curl --location 'https://api.nextbillion.io/optimization/v2/result?id=d9ce6a7471322af9e2cc7f2d7d81bd0d&key=bf321858e11c473a853fe11ecdd34a16' \
---header 'Content-Type: application/json'
-
 {
     "description": "SA Truck VRP — multi-depot, multi-capacity, time windows, zones, grouping (fixed)",
     "result": {
