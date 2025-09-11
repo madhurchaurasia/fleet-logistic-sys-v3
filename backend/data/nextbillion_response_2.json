@@ -1,0 +1,697 @@
+curl --location 'https://api.nextbillion.io/optimization/v2/result?id=d9ce6a7471322af9e2cc7f2d7d81bd0d&key=bf321858e11c473a853fe11ecdd34a16' \
+--header 'Content-Type: application/json'
+
+{
+    "description": "SA Truck VRP — multi-depot, multi-capacity, time windows, zones, grouping (fixed)",
+    "result": {
+        "code": 0,
+        "summary": {
+            "cost": 1228145,
+            "routes": 2,
+            "unassigned": 0,
+            "setup": 120,
+            "service": 19200,
+            "duration": 40800,
+            "waiting_time": 0,
+            "priority": 895,
+            "delivery": [
+                74,
+                29200
+            ],
+            "pickup": [
+                58,
+                24200
+            ],
+            "distance": 0
+        },
+        "routes": [
+            {
+                "vehicle": "NG-LAG-18T-01",
+                "cost": 875069,
+                "steps": [
+                    {
+                        "type": "start",
+                        "arrival": 1757335806.0869565,
+                        "duration": 0,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.5244,
+                            3.3792
+                        ],
+                        "location_index": 0,
+                        "load": [
+                            9,
+                            2900
+                        ],
+                        "distance": 0,
+                        "depot": "depot-lagos"
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757336406.0869565,
+                        "duration": 0,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.02,
+                            -1.52
+                        ],
+                        "location_index": 19,
+                        "id": "S10-P",
+                        "load": [
+                            14,
+                            4900
+                        ],
+                        "distance": 0,
+                        "internal_id": 3399164822
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757337006.0869565,
+                        "duration": 0,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.21,
+                            7.07
+                        ],
+                        "location_index": 22,
+                        "id": "S8-P",
+                        "load": [
+                            18,
+                            6500
+                        ],
+                        "distance": 0,
+                        "internal_id": 3923097867
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757341886.0869565,
+                        "duration": 4400,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.1498,
+                            6.7857
+                        ],
+                        "location_index": 6,
+                        "id": "S4-P",
+                        "load": [
+                            22,
+                            8100
+                        ],
+                        "distance": 41044,
+                        "internal_id": 4269223735
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1757342366.0869565,
+                        "duration": 4400,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            5.7,
+                            -0.36
+                        ],
+                        "location_index": 26,
+                        "id": "J5",
+                        "load": [
+                            19,
+                            7200
+                        ],
+                        "description": "Tema cluster store",
+                        "distance": 41044,
+                        "internal_id": 401659640
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757342966.0869565,
+                        "duration": 4400,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.5244,
+                            7.5174
+                        ],
+                        "location_index": 7,
+                        "id": "S4-D",
+                        "load": [
+                            15,
+                            5600
+                        ],
+                        "distance": 41044,
+                        "internal_id": 175587867
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757345060.2173913,
+                        "duration": 6014.130434782608,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.4531,
+                            7.5025
+                        ],
+                        "location_index": 15,
+                        "id": "S8-D",
+                        "load": [
+                            11,
+                            4000
+                        ],
+                        "distance": 51546,
+                        "internal_id": 4258650247
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757345540.2173913,
+                        "duration": 6014.130434782608,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.6885,
+                            -1.6244
+                        ],
+                        "location_index": 9,
+                        "id": "S5-P",
+                        "load": [
+                            21,
+                            8200
+                        ],
+                        "distance": 51546,
+                        "internal_id": 1631880008
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757347200,
+                        "duration": 7073.91304347826,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.7,
+                            -1.57
+                        ],
+                        "location_index": 27,
+                        "id": "S10-D",
+                        "load": [
+                            16,
+                            6200
+                        ],
+                        "distance": 59313,
+                        "internal_id": 3197833394
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1757347800,
+                        "duration": 7073.91304347826,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.46,
+                            2.73
+                        ],
+                        "location_index": 25,
+                        "id": "J4",
+                        "load": [
+                            14,
+                            5600
+                        ],
+                        "description": "Badagry drop",
+                        "distance": 59313,
+                        "internal_id": 418437259
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757348280,
+                        "duration": 7073.91304347826,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            5.1053,
+                            -1.2466
+                        ],
+                        "location_index": 11,
+                        "id": "S5-D",
+                        "load": [
+                            4,
+                            1400
+                        ],
+                        "distance": 59313,
+                        "internal_id": 1430548580
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757348880,
+                        "duration": 7073.91304347826,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            7.16,
+                            3.35
+                        ],
+                        "location_index": 3,
+                        "id": "S2-P",
+                        "load": [
+                            8,
+                            3200
+                        ],
+                        "distance": 59313,
+                        "internal_id": 2769235413
+                    },
+                    {
+                        "type": "layover",
+                        "arrival": 1757356686,
+                        "duration": 14400,
+                        "service": 1800,
+                        "waiting_time": 0,
+                        "id": 1,
+                        "distance": 59313,
+                        "internal_id": 1
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1757359390.4347825,
+                        "duration": 15304.347826086956,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.8689,
+                            3.7233
+                        ],
+                        "location_index": 14,
+                        "id": "J3",
+                        "load": [
+                            4,
+                            1800
+                        ],
+                        "description": "Sagamu delivery",
+                        "distance": 140435,
+                        "internal_id": 502325354
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757359990.4347825,
+                        "duration": 15304.347826086956,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.8689,
+                            3.7233
+                        ],
+                        "location_index": 14,
+                        "id": "S2-D",
+                        "load": [
+                            0,
+                            0
+                        ],
+                        "distance": 140435,
+                        "internal_id": 2433683033
+                    },
+                    {
+                        "type": "end",
+                        "arrival": 1757367335.6521738,
+                        "duration": 22169.565217391304,
+                        "service": 0,
+                        "waiting_time": 0,
+                        "location": [
+                            6.5244,
+                            3.3792
+                        ],
+                        "location_index": 0,
+                        "load": [
+                            0,
+                            0
+                        ],
+                        "distance": 218655,
+                        "depot": "depot-lagos"
+                    }
+                ],
+                "service": 9360,
+                "duration": 23969,
+                "waiting_time": 0,
+                "priority": 425,
+                "delivery": [
+                    36,
+                    14100
+                ],
+                "pickup": [
+                    27,
+                    11200
+                ],
+                "distance": 218655,
+                "geometry": null,
+                "description": "Rigid 18t - Lagos",
+                "vehicle_overtime": 0,
+                "internal_id": 3951111251,
+                "profile": "truck_profile",
+                "adopted_capacity": [
+                    22,
+                    12000
+                ]
+            },
+            {
+                "vehicle": "GH-ACC-18T-01",
+                "cost": 353076,
+                "steps": [
+                    {
+                        "type": "start",
+                        "arrival": 1757328988,
+                        "duration": 0,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            5.6037,
+                            -0.187
+                        ],
+                        "location_index": 1,
+                        "load": [
+                            7,
+                            2100
+                        ],
+                        "distance": 0,
+                        "depot": "depot-accra"
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757331720,
+                        "duration": 2132,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            5.68,
+                            0.01
+                        ],
+                        "location_index": 8,
+                        "id": "S6-P",
+                        "load": [
+                            13,
+                            4600
+                        ],
+                        "distance": 28046,
+                        "internal_id": 275677481
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757332320,
+                        "duration": 2132,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            7.3775,
+                            3.947
+                        ],
+                        "location_index": 2,
+                        "id": "S7-P",
+                        "load": [
+                            18,
+                            6800
+                        ],
+                        "distance": 28046,
+                        "internal_id": 2213468642
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757332800,
+                        "duration": 2132,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            4.904,
+                            -1.7562
+                        ],
+                        "location_index": 10,
+                        "id": "S6-D",
+                        "load": [
+                            12,
+                            4300
+                        ],
+                        "distance": 28046,
+                        "internal_id": 74346053
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757333400,
+                        "duration": 2132,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.45,
+                            3.6
+                        ],
+                        "location_index": 24,
+                        "id": "S7-D",
+                        "load": [
+                            7,
+                            2100
+                        ],
+                        "distance": 28046,
+                        "internal_id": 1877916262
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1757338332,
+                        "duration": 6584,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.4502,
+                            3.3903
+                        ],
+                        "location_index": 12,
+                        "id": "J1",
+                        "load": [
+                            4,
+                            1200
+                        ],
+                        "description": "Lekki retail drop",
+                        "distance": 59146,
+                        "internal_id": 468770116
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757338932,
+                        "duration": 6584,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.4502,
+                            3.3903
+                        ],
+                        "location_index": 12,
+                        "id": "S1-P",
+                        "load": [
+                            10,
+                            3600
+                        ],
+                        "distance": 59146,
+                        "internal_id": 3046550612
+                    },
+                    {
+                        "type": "break",
+                        "arrival": 1757339532,
+                        "duration": 6584,
+                        "service": 1800,
+                        "waiting_time": 0,
+                        "id": 202,
+                        "load": [
+                            8,
+                            3100
+                        ],
+                        "description": "Lunch",
+                        "distance": 59146,
+                        "internal_id": 202
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1757343767,
+                        "duration": 9019,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.596,
+                            3.337
+                        ],
+                        "location_index": 13,
+                        "id": "J2",
+                        "load": [
+                            8,
+                            3100
+                        ],
+                        "description": "Ikeja replenishment",
+                        "distance": 82980,
+                        "internal_id": 519102973
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757344367,
+                        "duration": 9019,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            5.56,
+                            -0.205
+                        ],
+                        "location_index": 17,
+                        "id": "S9-P",
+                        "load": [
+                            14,
+                            5500
+                        ],
+                        "distance": 82980,
+                        "internal_id": 227655164
+                    },
+                    {
+                        "type": "pickup",
+                        "arrival": 1757344967,
+                        "duration": 9019,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            6.335,
+                            5.603
+                        ],
+                        "location_index": 4,
+                        "id": "S3-P",
+                        "load": [
+                            22,
+                            9000
+                        ],
+                        "distance": 82980,
+                        "internal_id": 412059278
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1757351893,
+                        "duration": 15345,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            6.26,
+                            5.38
+                        ],
+                        "location_index": 23,
+                        "id": "J6",
+                        "load": [
+                            20,
+                            8300
+                        ],
+                        "description": "Sapele hardware",
+                        "distance": 124288,
+                        "internal_id": 451992497
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757352373,
+                        "duration": 15345,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            5.5536,
+                            -0.1969
+                        ],
+                        "location_index": 18,
+                        "id": "S9-D",
+                        "load": [
+                            14,
+                            5900
+                        ],
+                        "distance": 124288,
+                        "internal_id": 4187070080
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757352973,
+                        "duration": 15345,
+                        "setup": 120,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            4.8156,
+                            7.0498
+                        ],
+                        "location_index": 5,
+                        "id": "S1-D",
+                        "load": [
+                            8,
+                            3500
+                        ],
+                        "distance": 124288,
+                        "internal_id": 2710998232
+                    },
+                    {
+                        "type": "delivery",
+                        "arrival": 1757355179,
+                        "duration": 16831,
+                        "service": 600,
+                        "waiting_time": 0,
+                        "location": [
+                            4.8242,
+                            6.987
+                        ],
+                        "location_index": 21,
+                        "id": "S3-D",
+                        "load": [
+                            0,
+                            0
+                        ],
+                        "distance": 135971,
+                        "internal_id": 210727850
+                    },
+                    {
+                        "type": "end",
+                        "arrival": 1757355779,
+                        "duration": 16831,
+                        "service": 0,
+                        "waiting_time": 0,
+                        "location": [
+                            5.6037,
+                            -0.187
+                        ],
+                        "location_index": 1,
+                        "load": [
+                            0,
+                            0
+                        ],
+                        "distance": 135971,
+                        "depot": "depot-accra"
+                    }
+                ],
+                "setup": 120,
+                "service": 9840,
+                "duration": 16831,
+                "waiting_time": 0,
+                "priority": 470,
+                "delivery": [
+                    38,
+                    15100
+                ],
+                "pickup": [
+                    31,
+                    13000
+                ],
+                "distance": 135971,
+                "geometry": null,
+                "description": "Rigid 18t - Accra",
+                "vehicle_overtime": 0,
+                "internal_id": 906859444,
+                "profile": "truck_profile",
+                "adopted_capacity": [
+                    22,
+                    12000
+                ]
+            }
+        ],
+        "routing_profiles": {
+            "truck_profile": {
+                "truck_size": "250,250,900",
+                "truck_weight": 12000,
+                "mode": "truck",
+                "hazmat_type": [
+                    "general"
+                ]
+            }
+        }
+    },
+    "status": "Ok",
+    "message": ""
+}
