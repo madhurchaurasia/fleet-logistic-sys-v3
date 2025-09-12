@@ -57,6 +57,8 @@
     <input id="apiKey" placeholder="TT_API_KEY" value="" style="width:260px;padding:6px 8px"/>
     <button id="loadBtn">Load</button>
     <span id="meta" class="badge">—</span>
+    <label class="badge" for="dataSelect" style="margin-left:8px">Data:</label>
+    <select id="dataSelect" class="badge"></select>
     <select id="routeSelect" class="badge" style="margin-left:8px"></select>
     <label class="badge" style="display:flex;align-items:center;gap:4px;cursor:pointer">
       <input type="checkbox" id="debugShowAll" /> All points
@@ -79,27 +81,105 @@
     try { sdkSource = await window.ensureTomTomSDK(); }
     catch(e){ console.error(e); alert('Failed to load TomTom SDK. See console for details.'); }
   }
-  const summary = await fetch('/api/summary').then(r => r.json());
-  document.getElementById('meta').textContent = `routes: ${summary.routes_count} | deliveries: ${summary?.summary?.delivery?.[0] ?? '-'} pcs`;
   const routeSelect = document.getElementById('routeSelect');
+  const dataSelect = document.getElementById('dataSelect');
   const debugShowAll = document.getElementById('debugShowAll');
-  routeSelect.innerHTML = '';
-  summary.vehicles?.forEach((v, i) => {
-    const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = `${i+1}: ${v}`;
-    routeSelect.appendChild(opt);
-  });
-  // restore selected route if persisted
-  try{
-    const savedIdx = localStorage.getItem('TT_SELECTED_ROUTE');
-    if(savedIdx !== null && routeSelect.querySelector(`option[value="${savedIdx}"]`)){
-      routeSelect.value = savedIdx;
-    }
-  }catch{}
 
   let map, markers = [], routeLayers = [];
   let apiKeyGlobal = '';
+  let selectedVersion = null; // null=default latest; 0=base file
+  let geo = null; // current FeatureCollection
+
+  function qs(){ return (selectedVersion===null||selectedVersion===undefined) ? '' : `?version=${encodeURIComponent(selectedVersion)}`; }
+
+  async function populateDataSelect(){
+    try{
+      const info = await fetch('/api/data-files').then(r=>r.json());
+      const files = (info.files||[]).sort((a,b)=>a.version-b.version);
+      dataSelect.innerHTML = '';
+      for(const f of files){
+        const opt = document.createElement('option');
+        opt.value = String(f.version);
+        opt.textContent = f.name;
+        dataSelect.appendChild(opt);
+      }
+      const savedVerStr = localStorage.getItem('TT_DATA_VERSION');
+      const availableVers = new Set(files.map(f=>String(f.version)));
+      if(savedVerStr && availableVers.has(savedVerStr)){
+        dataSelect.value = savedVerStr;
+      } else if(info.default){
+        const def = files.find(f=>f.name===info.default);
+        if(def) dataSelect.value = String(def.version);
+      } else if(files.length){
+        dataSelect.value = String(files[files.length-1].version);
+      }
+      selectedVersion = dataSelect.value === '' ? null : Number(dataSelect.value);
+    }catch(e){
+      console.warn('Failed to load /api/data-files', e);
+      dataSelect.innerHTML = '';
+      selectedVersion = null;
+    }
+  }
+
+  async function loadSummary(){
+    const s = await fetch(`/api/summary${qs()}`).then(r=>r.json());
+    document.getElementById('meta').textContent = `routes: ${s.routes_count} | deliveries: ${s?.summary?.delivery?.[0] ?? '-'} pcs`;
+    routeSelect.innerHTML = '';
+    (s.vehicles||[]).forEach((v, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = `${i+1}: ${v}`;
+      routeSelect.appendChild(opt);
+    });
+    try{
+      const savedIdx = localStorage.getItem('TT_SELECTED_ROUTE');
+      if(savedIdx !== null && routeSelect.querySelector(`option[value="${savedIdx}"]`)){
+        routeSelect.value = savedIdx;
+      }
+    }catch{}
+    // Legend
+    try{
+      const legend = document.getElementById('legend');
+      const routeColors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628'];
+      legend.innerHTML='';
+      (s.vehicles||[]).forEach((v, i) => {
+        const row = document.createElement('div');
+        row.className='legend-row';
+        const sw = document.createElement('span'); sw.className='swatch'; sw.style.background = routeColors[i % routeColors.length];
+        const txt = document.createElement('span'); txt.textContent = v;
+        row.appendChild(sw); row.appendChild(txt);
+        legend.appendChild(row);
+      });
+      legend.hidden = false;
+    }catch{}
+    return s;
+  }
+
+  await populateDataSelect();
+  await loadSummary();
+
+  // Build fallback LineStrings from step Points ordered by location_index
+  function buildFallbackLines(fc){
+    const byRoute = new Map();
+    for(const f of (fc.features||[])){
+      if(f.geometry?.type === 'Point'){
+        const ri = f.properties?.route_index;
+        const li = f.properties?.location_index ?? 0;
+        if(ri == null) continue;
+        if(!byRoute.has(ri)) byRoute.set(ri, []);
+        byRoute.get(ri).push({ li: Number(li), coord: f.geometry.coordinates });
+      }
+    }
+    const features = [];
+    for(const [ri, arr] of byRoute.entries()){
+      arr.sort((a,b)=>a.li-b.li);
+      const coords = arr.map(x=>x.coord).filter(Array.isArray);
+      if(coords.length >= 2){
+        features.push({ type:'Feature', geometry:{ type:'LineString', coordinates: coords }, properties:{ route_index: ri, source:'fallback-sequence' } });
+      }
+    }
+    return { type:'FeatureCollection', features };
+  }
   async function boot(apiKey){
     if(!apiKey){ alert('Enter your TomTom API key'); return; }
     // Store key and mask field
@@ -121,29 +201,7 @@
     map.addControl(new tt.NavigationControl());
 
     // Load routes as GeoJSON
-    const geo = await fetch('/api/routes').then(r => r.json());
-    // Build fallback LineStrings from step Points ordered by location_index
-    function buildFallbackLines(fc){
-      const byRoute = new Map();
-      for(const f of (fc.features||[])){
-        if(f.geometry?.type === 'Point'){
-          const ri = f.properties?.route_index;
-          const li = f.properties?.location_index ?? 0;
-          if(ri == null) continue;
-          if(!byRoute.has(ri)) byRoute.set(ri, []);
-          byRoute.get(ri).push({ li: Number(li), coord: f.geometry.coordinates });
-        }
-      }
-      const features = [];
-      for(const [ri, arr] of byRoute.entries()){
-        arr.sort((a,b)=>a.li-b.li);
-        const coords = arr.map(x=>x.coord).filter(Array.isArray);
-        if(coords.length >= 2){
-          features.push({ type:'Feature', geometry:{ type:'LineString', coordinates: coords }, properties:{ route_index: ri, source:'fallback-sequence' } });
-        }
-      }
-      return { type:'FeatureCollection', features };
-    }
+    geo = await fetch(`/api/routes${qs()}`).then(r => r.json());
     const hasValidServerLines = (geo.features||[]).some(f => f.geometry?.type==='LineString' && Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length>=2);
     const fallbackLines = hasValidServerLines ? null : buildFallbackLines(geo);
     console.log('[lines] server valid:', hasValidServerLines, 'fallback lines:', fallbackLines?.features?.length||0);
@@ -354,6 +412,23 @@
     }
   }
 
+  async function reloadForDataVersion(){
+    await loadSummary();
+    if(map){
+      geo = await fetch(`/api/routes${qs()}`).then(r=>r.json());
+      const src = map.getSource('routes');
+      if(src && src.setData){ src.setData(geo); }
+      const hasValidServerLines = (geo.features||[]).some(f => f.geometry?.type==='LineString' && Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length>=2);
+      const fb = hasValidServerLines ? { type:'FeatureCollection', features: [] } : buildFallbackLines(geo);
+      const fbSrc = map.getSource('fallback-lines');
+      if(fbSrc && fbSrc.setData){ fbSrc.setData(fb); }
+      if(typeof routeSelect.onchange === 'function') routeSelect.onchange();
+      const idx = Number(routeSelect.value||0);
+      const bbox = getBBoxForRoute(geo, idx);
+      if(bbox){ map.fitBounds(bbox, { padding: 60 }); }
+    }
+  }
+
   function getBBox(geo){
     if(!geo?.features?.length) return null;
     let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
@@ -391,9 +466,15 @@
   }
   
 
-  document.getElementById('loadBtn').onclick = () => {
+  document.getElementById('loadBtn').onclick = async () => {
     const key = document.getElementById('apiKey').value.trim();
-    boot(key);
+    if(map && apiKeyGlobal === key){
+      await reloadForDataVersion();
+      return;
+    }
+    try{ if(map && typeof map.remove === 'function') map.remove(); }catch{}
+    map = null;
+    await boot(key);
   };
   // Pressing Enter in the API key field triggers Load
   document.getElementById('apiKey').addEventListener('keydown', (e) => {
@@ -414,19 +495,15 @@
     const badge = document.getElementById('meta');
     badge.textContent += ` | sdk: ${sdkSource}`;
   }
-  // Build color legend (vehicle → color)
-  const legend = document.getElementById('legend');
-  const routeColors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628'];
-      legend.innerHTML='';
-      (summary.vehicles||[]).forEach((v, i) => {
-        const row = document.createElement('div');
-        row.className='legend-row';
-        const sw = document.createElement('span'); sw.className='swatch'; sw.style.background = routeColors[i % routeColors.length];
-        const txt = document.createElement('span'); txt.textContent = v;
-        row.appendChild(sw); row.appendChild(txt);
-        legend.appendChild(row);
-      });
-      legend.hidden = false;
+  // Legend is rebuilt in loadSummary()
+
+  // Handle data version changes
+  const dataSelectEl = document.getElementById('dataSelect');
+  dataSelectEl.onchange = async () => {
+    selectedVersion = dataSelectEl.value === '' ? null : Number(dataSelectEl.value);
+    try{ localStorage.setItem('TT_DATA_VERSION', String(selectedVersion)); }catch{}
+    await reloadForDataVersion();
+  };
 
   // Click on step points to focus and reverse geocode
   try{
