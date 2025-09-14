@@ -1,0 +1,2 @@
+id,vehicle_description,capacity,start_latitude,start_longitude,end_latitude,end_longitude,shift_start,shift_end,max_tasks
+Truck-01,JHB van,12;6000,-26.2041,28.0473,-26.2041,28.0473,1753747200,1753833600,6

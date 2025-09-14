@@ -1,0 +1,558 @@
+{
+  "description": "ZA VRP — jobs-only, 2 depots, 7 vehicles, zone+skill aware",
+  "locations": {
+    "id": 100,
+    "location": [
+      "-26.2041,28.0473",
+      "-29.8587,31.0218",
+      "-26.1076,28.0567",
+      "-25.7479,28.2293",
+      "-26.2678,27.8585",
+      "-26.1710,28.0473",
+      "-26.2023,28.0436",
+      "-29.6006,30.3794",
+      "-29.8283,30.8911",
+      "-29.7260,31.0680",
+      "-29.5380,31.2140",
+      "-29.9500,30.9950"
+    ],
+    "approaches": [
+      "unrestricted",
+      "unrestricted",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb"
+    ]
+  },
+  "depots": [
+    {
+      "id": "depot-jhb",
+      "location_index": 0,
+      "description": "Johannesburg DC",
+      "time_windows": [
+        [
+          1753747200,
+          1753833600
+        ]
+      ],
+      "service": 300
+    },
+    {
+      "id": "depot-dbn",
+      "location_index": 1,
+      "description": "Durban DC",
+      "time_windows": [
+        [
+          1753747200,
+          1753833600
+        ]
+      ],
+      "service": 300
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "Truck-GP-01",
+      "description": "Gauteng Ambient 12t",
+      "start_depot_ids": [
+        "depot-jhb"
+      ],
+      "end_depot_ids": [
+        "depot-jhb"
+      ],
+      "capacity": [
+        12,
+        6000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ],
+      "skills": [
+        1
+      ],
+      "allowed_zones": [
+        501
+      ],
+      "max_tasks": 12,
+      "profile": "truck_profile",
+      "costs": {
+        "fixed": 900
+      }
+    },
+    {
+      "id": "Reefer-GP-02",
+      "description": "Gauteng Chilled 10t",
+      "start_depot_ids": [
+        "depot-jhb"
+      ],
+      "end_depot_ids": [
+        "depot-jhb"
+      ],
+      "capacity": [
+        10,
+        5000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ],
+      "skills": [
+        2
+      ],
+      "allowed_zones": [
+        501
+      ],
+      "max_tasks": 10,
+      "profile": "truck_profile",
+      "costs": {
+        "fixed": 950
+      }
+    },
+    {
+      "id": "Truck-KZN-01",
+      "description": "KZN Ambient 12t",
+      "start_depot_ids": [
+        "depot-dbn"
+      ],
+      "end_depot_ids": [
+        "depot-dbn"
+      ],
+      "capacity": [
+        12,
+        6000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ],
+      "skills": [
+        1
+      ],
+      "allowed_zones": [
+        502
+      ],
+      "max_tasks": 12,
+      "profile": "truck_profile",
+      "costs": {
+        "fixed": 900
+      }
+    },
+    {
+      "id": "Truck-KZN-02",
+      "description": "KZN Ambient 10t",
+      "start_depot_ids": [
+        "depot-dbn"
+      ],
+      "end_depot_ids": [
+        "depot-dbn"
+      ],
+      "capacity": [
+        10,
+        5000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ],
+      "skills": [
+        1
+      ],
+      "allowed_zones": [
+        502
+      ],
+      "max_tasks": 10,
+      "profile": "truck_profile",
+      "costs": {
+        "fixed": 880
+      }
+    },
+    {
+      "id": "Reefer-KZN-03",
+      "description": "KZN Chilled 10t",
+      "start_depot_ids": [
+        "depot-dbn"
+      ],
+      "end_depot_ids": [
+        "depot-dbn"
+      ],
+      "capacity": [
+        10,
+        5000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ],
+      "skills": [
+        2
+      ],
+      "allowed_zones": [
+        502
+      ],
+      "max_tasks": 10,
+      "profile": "truck_profile",
+      "costs": {
+        "fixed": 1000
+      }
+    },
+    {
+      "id": "Van-GP-03",
+      "description": "Gauteng Van (non-matching skill)",
+      "start_depot_ids": [
+        "depot-jhb"
+      ],
+      "end_depot_ids": [
+        "depot-jhb"
+      ],
+      "capacity": [
+        4,
+        1200
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ],
+      "skills": [
+        3
+      ],
+      "allowed_zones": [
+        501
+      ],
+      "max_tasks": 6,
+      "profile": "truck_profile",
+      "costs": {
+        "fixed": 500
+      }
+    },
+    {
+      "id": "Spare-National-01",
+      "description": "National spare (both zones, costly)",
+      "start_depot_ids": [
+        "depot-jhb"
+      ],
+      "end_depot_ids": [
+        "depot-jhb"
+      ],
+      "capacity": [
+        14,
+        7000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ],
+      "skills": [
+        1,
+        2
+      ],
+      "max_tasks": 14,
+      "max_distance": 1200000,
+      "max_travel_time": 54000,
+      "profile": "truck_profile",
+      "costs": {
+        "fixed": 5000
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "id": "J-GP-001",
+      "description": "Sandton retail",
+      "location_index": 2,
+      "delivery": [
+        2,
+        800
+      ],
+      "service": 600,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 70
+    },
+    {
+      "id": "J-GP-002",
+      "description": "Pretoria CBD",
+      "location_index": 3,
+      "delivery": [
+        3,
+        900
+      ],
+      "service": 600,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 60
+    },
+    {
+      "id": "J-GP-003",
+      "description": "Soweto store",
+      "location_index": 4,
+      "delivery": [
+        2,
+        700
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 50
+    },
+    {
+      "id": "J-GP-004",
+      "description": "JHB CBD office",
+      "location_index": 5,
+      "delivery": [
+        2,
+        600
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 55
+    },
+    {
+      "id": "J-GP-005",
+      "description": "Braamfontein café",
+      "location_index": 6,
+      "delivery": [
+        1,
+        400
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 45
+    },
+    {
+      "id": "J-KZN-001",
+      "description": "PMB wholesaler",
+      "location_index": 7,
+      "delivery": [
+        3,
+        1200
+      ],
+      "service": 600,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 65
+    },
+    {
+      "id": "J-KZN-002",
+      "description": "Hillcrest mall",
+      "location_index": 8,
+      "delivery": [
+        2,
+        800
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 60
+    },
+    {
+      "id": "J-KZN-CH1",
+      "description": "Umhlanga fresh (ch)",
+      "location_index": 9,
+      "delivery": [
+        2,
+        900
+      ],
+      "service": 600,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        2
+      ],
+      "priority": 80
+    },
+    {
+      "id": "J-KZN-CH2",
+      "description": "Ballito grocer (ch)",
+      "location_index": 10,
+      "delivery": [
+        2,
+        900
+      ],
+      "service": 600,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        2
+      ],
+      "priority": 80
+    },
+    {
+      "id": "J-KZN-003",
+      "description": "South Durban depot",
+      "location_index": 11,
+      "delivery": [
+        2,
+        700
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753830000
+        ]
+      ],
+      "skills": [
+        1
+      ],
+      "priority": 50
+    }
+  ],
+  "options": {
+    "objective": {
+      "travel_cost": "distance",
+      "custom": {
+        "type": "min",
+        "value": "vehicles"
+      }
+    },
+    "allow_early_arrival": true,
+    "solving_time_limit": 120,
+    "constraint": {
+      "max_vehicle_overtime": 3600,
+      "max_visit_lateness": 3600,
+      "max_activity_waiting_time": 7200
+    },
+    "routing": {
+      "disable_cache": false,
+      "cross_border": false,
+      "profiles": {
+        "truck_profile": {
+          "mode": "truck",
+          "truck_weight": 12000,
+          "truck_size": "250,250,900"
+        }
+      }
+    }
+  },
+  "zones": [
+    {
+      "id": 501,
+      "description": "Gauteng zone",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              27.5,
+              -26.6
+            ],
+            [
+              29.2,
+              -26.6
+            ],
+            [
+              29.2,
+              -25.5
+            ],
+            [
+              27.5,
+              -25.5
+            ],
+            [
+              27.5,
+              -26.6
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": 502,
+      "description": "KZN zone",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              30.1,
+              -30.2
+            ],
+            [
+              31.7,
+              -30.2
+            ],
+            [
+              31.7,
+              -29.3
+            ],
+            [
+              30.1,
+              -29.3
+            ],
+            [
+              30.1,
+              -30.2
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

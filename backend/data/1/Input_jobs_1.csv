@@ -1,0 +1,7 @@
+ID,Description,Location Lat,Location Lng,Pickup Quantity,Delivery Quantity,Service Time
+J1,Pretoria drop,-25.7479,28.2293,0,2,480
+J2,Soweto drop,-26.2678,27.8585,0,1,480
+J3,Sandton drop,-26.1076,28.0567,0,2,480
+J4,CBD drop,-26.2023,28.0436,0,1,480
+J5,Midrand drop,-26.171,28.0473,0,2,480
+J6,Melville drop,-26.0941,28.001,0,1,480

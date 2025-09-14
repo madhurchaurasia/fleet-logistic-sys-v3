@@ -1,0 +1,306 @@
+{
+  "description": "NB — priorities + min vehicles (4 depots, 4 vehicles, 8 drops)",
+  "locations": {
+    "location": [
+      "-26.2041,28.0473",
+      "-33.9249,18.4241",
+      "-25.7479,28.2293",
+      "-29.8587,31.0218",
+      "-26.2678,27.8585",
+      "-26.1076,28.0567",
+      "-26.2023,28.0436",
+      "-26.1710,28.0473",
+      "-26.0941,28.0010",
+      "-29.6006,30.3794",
+      "-29.1211,26.2140",
+      "-33.9344,18.8610"
+    ],
+    "approaches": [
+      "unrestricted",
+      "unrestricted",
+      "unrestricted",
+      "unrestricted",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb",
+      "curb"
+    ]
+  },
+  "depots": [
+    {
+      "id": "depot-jhb",
+      "description": "Johannesburg DC",
+      "location_index": 0,
+      "time_windows": [
+        [
+          1753747200,
+          1753833600
+        ]
+      ],
+      "service": 300
+    },
+    {
+      "id": "depot-ct",
+      "description": "Cape Town DC",
+      "location_index": 1,
+      "time_windows": [
+        [
+          1753747200,
+          1753833600
+        ]
+      ],
+      "service": 300
+    },
+    {
+      "id": "depot-pta",
+      "description": "Pretoria DC",
+      "location_index": 2,
+      "time_windows": [
+        [
+          1753747200,
+          1753833600
+        ]
+      ],
+      "service": 300
+    },
+    {
+      "id": "depot-dbn",
+      "description": "Durban DC",
+      "location_index": 3,
+      "time_windows": [
+        [
+          1753747200,
+          1753833600
+        ]
+      ],
+      "service": 300
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "Van-JHB-01",
+      "description": "JHB day van",
+      "start_depot_ids": [
+        "depot-jhb"
+      ],
+      "end_depot_ids": [
+        "depot-jhb"
+      ],
+      "capacity": [
+        12,
+        6000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ]
+    },
+    {
+      "id": "Van-CT-01",
+      "description": "CT day van",
+      "start_depot_ids": [
+        "depot-ct"
+      ],
+      "end_depot_ids": [
+        "depot-ct"
+      ],
+      "capacity": [
+        10,
+        5000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ]
+    },
+    {
+      "id": "Van-PTA-01",
+      "description": "PTA day van",
+      "start_depot_ids": [
+        "depot-pta"
+      ],
+      "end_depot_ids": [
+        "depot-pta"
+      ],
+      "capacity": [
+        10,
+        5000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ]
+    },
+    {
+      "id": "Van-DBN-01",
+      "description": "DBN day van",
+      "start_depot_ids": [
+        "depot-dbn"
+      ],
+      "end_depot_ids": [
+        "depot-dbn"
+      ],
+      "capacity": [
+        10,
+        5000
+      ],
+      "time_window": [
+        1753747200,
+        1753833600
+      ]
+    }
+  ],
+  "jobs": [
+    {
+      "id": "J1",
+      "description": "Soweto (dry)",
+      "location_index": 4,
+      "delivery": [
+        2,
+        700
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 60
+    },
+    {
+      "id": "J2",
+      "description": "Sandton (dry)",
+      "location_index": 5,
+      "delivery": [
+        2,
+        800
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 80
+    },
+    {
+      "id": "J3",
+      "description": "JHB CBD (dry)",
+      "location_index": 6,
+      "delivery": [
+        1,
+        400
+      ],
+      "service": 420,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 50
+    },
+    {
+      "id": "J4",
+      "description": "Midrand (dry)",
+      "location_index": 7,
+      "delivery": [
+        2,
+        900
+      ],
+      "service": 480,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 70
+    },
+    {
+      "id": "J5",
+      "description": "Melville (dry)",
+      "location_index": 8,
+      "delivery": [
+        1,
+        300
+      ],
+      "service": 420,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 40
+    },
+    {
+      "id": "J6",
+      "description": "Pietermaritzburg (dry)",
+      "location_index": 9,
+      "delivery": [
+        2,
+        900
+      ],
+      "service": 540,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 65
+    },
+    {
+      "id": "J7",
+      "description": "Bloemfontein (dry)",
+      "location_index": 10,
+      "delivery": [
+        2,
+        700
+      ],
+      "service": 540,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 55
+    },
+    {
+      "id": "J8",
+      "description": "Stellenbosch (dry)",
+      "location_index": 11,
+      "delivery": [
+        2,
+        600
+      ],
+      "service": 540,
+      "time_windows": [
+        [
+          1753750800,
+          1753765200
+        ]
+      ],
+      "priority": 75
+    }
+  ],
+  "options": {
+    "objective": {
+      "travel_cost": "distance",
+      "custom": {
+        "type": "min",
+        "value": "vehicles"
+      }
+    },
+    "allow_early_arrival": true,
+    "solving_time_limit": 90
+  }
+}

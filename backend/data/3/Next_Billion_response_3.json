@@ -1,0 +1,262 @@
+{
+    "description": "NB — breaks + max_tasks (2 depots, 1 vehicle, 6 drops)",
+    "result": {
+        "code": 0,
+        "summary": {
+            "cost": 193575,
+            "routes": 1,
+            "unassigned": 0,
+            "setup": 0,
+            "service": 4680,
+            "duration": 10034,
+            "waiting_time": 0,
+            "priority": 0,
+            "delivery": [
+                9,
+                3400
+            ],
+            "pickup": [
+                0,
+                0
+            ],
+            "distance": 193575
+        },
+        "routes": [
+            {
+                "vehicle": "Truck-01",
+                "cost": 193575,
+                "steps": [
+                    {
+                        "type": "start",
+                        "arrival": 1753750704,
+                        "duration": 0,
+                        "service": 0,
+                        "waiting_time": 0,
+                        "location": [
+                            -26.2041,
+                            28.0473
+                        ],
+                        "location_index": 0,
+                        "load": [
+                            9,
+                            3400
+                        ],
+                        "distance": 0,
+                        "snapped_location": [
+                            -26.2041,
+                            28.04734
+                        ],
+                        "depot": "depot-jhb"
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1753750800,
+                        "duration": 96,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            -26.2023,
+                            28.0436
+                        ],
+                        "location_index": 5,
+                        "id": "J4",
+                        "load": [
+                            8,
+                            3100
+                        ],
+                        "description": "CBD drop",
+                        "distance": 587,
+                        "internal_id": 418437259,
+                        "snapped_location": [
+                            -26.2023,
+                            28.04362
+                        ]
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1753752034,
+                        "duration": 850,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            -26.171,
+                            28.0473
+                        ],
+                        "location_index": 6,
+                        "id": "J5",
+                        "load": [
+                            6,
+                            2200
+                        ],
+                        "description": "Midrand drop",
+                        "distance": 7747,
+                        "internal_id": 401659640,
+                        "snapped_location": [
+                            -26.17091,
+                            28.04794
+                        ]
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1753754865,
+                        "duration": 3201,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            -25.7479,
+                            28.2293
+                        ],
+                        "location_index": 2,
+                        "id": "J1",
+                        "load": [
+                            4,
+                            1400
+                        ],
+                        "description": "Pretoria drop",
+                        "distance": 68860,
+                        "internal_id": 468770116,
+                        "snapped_location": [
+                            -25.74805,
+                            28.22931
+                        ]
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1753757623,
+                        "duration": 5479,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            -26.1076,
+                            28.0567
+                        ],
+                        "location_index": 4,
+                        "id": "J3",
+                        "load": [
+                            2,
+                            700
+                        ],
+                        "description": "Sandton drop",
+                        "distance": 123809,
+                        "internal_id": 502325354,
+                        "snapped_location": [
+                            -26.10724,
+                            28.05715
+                        ]
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1753759004,
+                        "duration": 6380,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            -26.0941,
+                            28.001
+                        ],
+                        "location_index": 7,
+                        "id": "J6",
+                        "load": [
+                            1,
+                            400
+                        ],
+                        "description": "Melville drop",
+                        "distance": 131682,
+                        "internal_id": 451992497,
+                        "snapped_location": [
+                            -26.09409,
+                            28.00099
+                        ]
+                    },
+                    {
+                        "type": "job",
+                        "arrival": 1753761468,
+                        "duration": 8364,
+                        "service": 480,
+                        "waiting_time": 0,
+                        "location": [
+                            -26.2678,
+                            27.8585
+                        ],
+                        "location_index": 3,
+                        "id": "J2",
+                        "load": [
+                            0,
+                            0
+                        ],
+                        "description": "Soweto drop",
+                        "distance": 167734,
+                        "internal_id": 519102973,
+                        "snapped_location": [
+                            -26.26792,
+                            27.85842
+                        ]
+                    },
+                    {
+                        "type": "break",
+                        "arrival": 1753761948,
+                        "duration": 8364,
+                        "service": 1800,
+                        "waiting_time": 0,
+                        "id": 9001,
+                        "load": [
+                            0,
+                            0
+                        ],
+                        "description": "Lunch",
+                        "distance": 167734,
+                        "internal_id": 9001
+                    },
+                    {
+                        "type": "end",
+                        "arrival": 1753765418,
+                        "duration": 10034,
+                        "service": 0,
+                        "waiting_time": 0,
+                        "location": [
+                            -26.2041,
+                            28.0473
+                        ],
+                        "location_index": 0,
+                        "load": [
+                            0,
+                            0
+                        ],
+                        "distance": 193575,
+                        "snapped_location": [
+                            -26.2041,
+                            28.04734
+                        ],
+                        "depot": "depot-jhb"
+                    }
+                ],
+                "service": 4680,
+                "duration": 10034,
+                "waiting_time": 0,
+                "priority": 0,
+                "delivery": [
+                    9,
+                    3400
+                ],
+                "pickup": [
+                    0,
+                    0
+                ],
+                "distance": 193575,
+                "geometry": "r~|~C{~djDC@K?[DiBPaCPW@d@bJTdD@PPjCgCPO@uBPa@BRbDVtD@N?HPzCJdDNbDP~CB^LzBk@DgBPS@WB[Ba@B]?O?W?_@CMCu@I_@EICOAa@EOAi@EK?[AW?UAsAJsBNg@Da@BwBNc@FOBOHMNKP{AvCO\\u@~BGTCz@?ZCPEbAAlA?x@@V@\\Dt@@VBf@Bp@AVDTD~@FjAFfAVdF@VFlA@h@?F?PLtB?F?F@N@JHX@HJJFFe@TKDmAd@YDe@DQBe@Bi@DUBC?o@JmATC?w@HUDEAWDE?]DC?G@C@S?e@@S?S?g@Cw@EMASA[Cy@Gc@Ea@Ea@E[AA?e@Ae@?c@@a@BeBLQ@iCTcAJwAFmAJ}@Fk@@m@Ac@Ce@Ei@MWIGC_@M?A]Oc@YWSCCOMEEGECGIICAGIEGOSGIACIQCECGSg@YgAOq@COGm@MgAEe@Ky@OcAOk@Oi@Ug@Sa@CGKQGIAAEIGGGKIGOQ_@]m@i@YU{BiB}GmFiA}@mB{A_E}CKGo@e@c@[IGGCQM_Am@{@i@k@KOG]Qw@a@w@c@q@c@q@i@oB}AiA_Aa@YWOa@Uc@MsAe@KEYIQGe@S[Qe@WCC[U_@Ye@c@_@]iAgA_@]c@e@cAaAqGkGUUEGuAuA}C{Cw@u@q@q@KK{AyAf@q@Xa@pAeBPSFI@C@C@I?GEIGG[[uAuAaE}Dj@I`Eg@JAXEx@KHAZEtAQz@KJ?L@JDb@`@ZZBD@@HCHABAF?B@b@NF@FCTMLO@G@KI}@@KFM@CDEBBBDn@p@o@q@CECCEDABGLAJH|@AJAFMNULGBGAc@OCAG?C@I@IBAACE[[c@a@KEMAK?{@J@Q?IDuB?GA?CAAC?A?C@C@ABA@?@]Bi@@]BaBBkAA}AAgAK{ABi@Ne@RYBCjAu@bAm@p@c@NIZQFM@CBO@OBg@o@I}Hq@g@EoBOOAm@Gk@Eu@Gc@MWKSK[Uk@g@gAs@mAo@u@YsAa@MCa@OcA_@OO[Iy@U{@UaCo@KCUGiD}@MEQEUGiBc@OE]Kc@GKCcAOQCw@KgAKuAGC?mAA}A@k@?yBD_DDuEHE?}ABU@I?iBBU?qFH_DFW?wBBk@?O?}@Ay@?i@AC?Y?eBCQ?cBAe@Au@CY?u@GSAgAOsAQqBe@eAWeAa@i@SIEGCUKq@]{Aw@GE{@m@eBwAuAwAMMOSw@cA[e@m@}@a@m@GIiCeE}DkGm@_AKSGGMUeC_EU_@_BeCoCiE}@kAGIEIQUw@}@gB{AaAq@y@e@sBaAe@M]KqC}@eA[eAYcCq@yHyBuA_@_D{@m@QYIqDeAiCm@oAWcAM}@IGAY?IAS?k@Cq@?uA?O?c@BuADw@BkABI?eADkAF[?e@?_A?q@?E?e@C{@E}@GgAQkAU_@KuA_@YGqEoAyBm@o@Q{C{@g@MoDaAqCu@qA_@c@MYGsEkAqAa@q@Q_Bc@w@QOCk@Mk@Mm@Kk@M{Ba@]GaBU{@Kq@K{BYyAScAOoH_As@Ie@G[E{G}@sEq@w@M}A]c@IqA]oA_@c@MOEeA_@KEUI]OsAk@qBeAcAk@i@YkBoA}BcBeBuAqAcAaCkBgCoBsBaBa@[iCuB{@q@k@c@OMaEiCu@]m@W}Ak@a@KeCo@mB[k@IcAIKAeAKYCi@Eu@GQAaAIi@EqCUMA_CScDW[CSCOAc@COCuAKyD[cE]mAKyD[gE[}AImAMiAOmF_@cDYsAKmAKk@EeDYwCUoAKUCCAIAkAKuAQ_AQg@KmB[sCg@qB]{AYsCg@oFaAKCiCc@C?gCe@kAS_AOWGq@MSCEA]GcCc@aAQs@M_@G_Eu@aAQwAUmAWcAWm@Us@UGCo@Sg@U}@e@OISKoBkAaCyAaB_A_Ac@}Am@u@W}A_@CACA}@OuAUuAKq@CmAGwCAcCAm@?sA?Q?QA{DAoB?}@?}BAe@?[?kA?a@?oC@yAA_AGuAKaAMeAQa@KCAWGmA_@u@YOGIE}@e@o@a@OGgAs@u@m@i@i@OOSUKMAAGKUWOQy@oA_A{A}@}As@sAaCgEu@wAgAmBs@qAa@s@mByCQYYi@wCgFmAyBe@}@i@u@Ya@aBuBkAkAgA_A_As@IGy@e@kAm@sAo@gA]eA]kCk@kEu@uLoBqHqAwLeCEAEAQEKCwEkAOEcDu@mA]wAa@q@UaF_BgFgBeBq@iJkDeAc@o@Wu@[SGaG{B[K}CmAq@Y}B{@eCaA_E}A{Ak@OGi@Sg@SGCKESGsBy@mCeAyB{@ICkBw@KE[ISIsAi@k@UmAe@iCaA}CkAeAa@qHuCc@Qa@MuAg@uC}@_Cm@oEaAUEuB_@iBW_@Gm@GqBSuBSQAm@Cs@Ga@C]AiAEgBEqAEUAyAC}AAmAGiCI_BK}@GSAuAMs@Gs@I}AQ}AQyAScAQIAk@KkAUcB[gCe@aWgF_Ey@}A[aASm@M_ASu@Q}@Q}Dy@GCcASeFeAgB_@OEyAYiB_@kBa@cBa@mAWMCGAEAKCEAoFkA}EcAsNyC_GkAoAY{@QeB_@aAS{Cq@kDu@IAuDw@kDs@{Cm@gE}@sDw@{Dy@_JkB{Dw@}N}CQE]GuIgBaDo@kLcCcB_@wA[[GUEsDy@cASeDy@m@OuDy@uA]aCk@cOyDaPqEoNmE{IuCsIyCuAi@kK}DQGcBo@{B}@w@[m@UyEoBMEoAi@wHeDuB_AaFwByDiBWMqGyCaEsB}H}DuKyF{@c@gAm@UO_Ag@oHcEA?mBeAQKwAu@gFsCs@a@eE}BaFoCuLqGqAs@QI{GqDsHcEyEkC_FmCWMkAq@OIq@_@k@[y@c@}Au@yE{ByHiDgG}BIEIC{DyAo@UoBo@uAe@KC}@[}CcAe@O}Bk@sJeC_ASwDw@a@IqEaAgEq@g@K_@EgCa@oAS}HmAi@IOC}@O_Fw@aBYe@IUEMDG?M@uIgAcAOo@G_AIkAIu@Em@CC?mACG?c@@e@?wAHe@BiANyAXq@LiAVSDk@Hk@Dm@BS@]@]?q@Cm@GSC}@S}@[y@a@e@[c@[}@aA]e@[g@KSKSUi@Qk@Q{@CGEa@Gc@AMCYEc@AkA?y@?O?yBAq@OuCIsAg@gEQgAYkA[wAm@eCEQ?UoBmFOa@Ws@kAgDoEgMGO{BkGeDiJmCsHo@iBeEiLu@uBM]y@{BQg@eAyCUq@{AiEwAaEIUEOQe@Qg@y@}BoAkDGQm@cBu@qBIU}AiE}BoHK_@EKo@iCCK_AsDUaASw@}@}DyAgHwAeJAGa@oCE]COMu@Iy@_BoNCUCYkAqKqAoLk@mFE]Go@YiCm@kDe@gCy@sDyAeFCEiAaDISO_@yA{CUg@kBmDs@eAq@cAMQGKOSw@}@{@eAQQsC}CiC{BiBuA_BkAoBmAgBcAiBy@_Ac@oAg@yAi@aDcAwCy@qBm@sEqAqBk@aCq@qDiAuBs@KE}B}@}@_@yB_AeD}A{BoAs@a@oBmAcAq@_DuB[UyDyCqEeEgEaEQQOMKK_D_D}A{AwCqCi@i@MMg@e@_BaBaB{AqBqBkBkBwAuAqBkBaC_CoBmBc@_@]a@k@i@SS]_@USQS][aCiCKISSoAmAcBeBo@m@_@]cBaBkBgBaBcBoAmAQO_A_A_@]OOSQ[[i@k@_C_CuBsB_C}BkCgC_AaAa@[qBeBEGUOIIOKOMaBsAoCqBeD{Bi@[yA}@gCuAmBaAECsDaBuDyAy@[UIs@WoF{AqEoAg@MaDy@sCs@[IICICICIAoGgBiEeAyHuByA_@e@MMCgA_@yCaAkDqAgAa@uFcC{DmBgEaC_@SECmC_Bw@i@KGyCmBaEkCgFaDw@i@kBmAOKECu@c@OIe@Wk@_@_Bs@]OiDwAcBq@qBs@e@OQGcEcAsAWk@KiAQw@Km@I_AMiDi@o@KuB]{AWc@EMCICKCIAGA_AQs@MwDu@mCk@}FaAy@KmAQy@K}Dg@EAoAUy@OQE_@GGAAAkAU{@U[EGAi@Ia@G]EuCi@wFq@QCsB[wB]wCg@oGeAaDi@oB[wGiAq@Ii@KyCe@SE{B[s@Mw@M_@IKAgAS}ASqAUc@Es@GmBE]A_DE{Lv@}AJgAHy@Ds@DuAH_@B_AF]BoBLsAHC?yAJK?gAHeCL_DTuALKBkAPuB^mBf@oBn@wAf@m@V}At@{Ax@_B`AQLoA`Ai@^EDc@`@GFUR]\\}A~AML{B`Ce@f@mBlBEJUTgBvBMLsAdBuBpCcAlAIHKH]\\YZmAdAqAfAGLGN_AjA}BdCuBxB{AbBs@rA_@v@ELQn@UbAK~AA~@?r@B\\Dr@FpABRAFNzAP|AX`CZtCL`CDx@@J@`@H`CBb@Dl@CR@P@f@@DRnFHlBJfBJfBBJD`@NhABHLx@`AbD\\fAp@vBBHHZNd@|@hCTz@J\\f@dBP`ADn@?JBR?@@\\?LFjB?JLzDBt@@ZBv@J|DN`FBfAJvCHzCLzD@h@FjBDzABv@JvDBj@L~D?XDtAHlCPvFPnF@XPtHHtCBj@NfFLrFlHY`HWYqJE}AAm@IeCQmFM{BU@sBJK?eCJ]gNIaCIwBEwAA]IuBCeAOkFAY?SGgCCa@A{@AQAQCk@?GA[AUGcBEeBAQAg@E{AIaAEu@Cc@Qy@K_@m@oCEQMi@EO_@}AEU_@aBGSw@gDIYKe@m@gCK_@Uy@GMk@aAy@s@??w@s@sAqAMMk@{@_@_AM_@M_@Q{@Iy@GmBEaAAU?QE{@ScGEy@OkCIcBQaDCe@CGKaAM_AQeAQcASaAKo@CMMu@Oq@Ms@UsAMs@EUEWQcAK{@Gi@Eo@EqAKeCAy@C}@QoFE{@Ae@Aq@A_@AQAEIgAGg@KYMQOOUKYEY?WFSHOPMVGVCZB\\JZNRNNRJVFX@f@AF?x@K^E`@A`@GTEn@KlAS~Ag@nA_@|Am@rAo@bBaA~AiAz@w@n@i@dD_DjDkDbCoBDC\\_@l@m@xGeHp@o@FEPOt@q@dA{@h@]`@YJG~CiBrB}@TMt@[bA_@dCs@~Bg@dB[p@Gb@Gn@G`@EpBOzE]^ATAHA`CMnBMD?rAKb@CzAGt@E|BMpO}@tBCT?`BDjCN\\Dx@JpBZbANJB`@F`@FdBXRB`@Fj@Jx@LlEt@fCd@hANj@H^H`Ep@|Et@lGdArB\\LBTBlBXpATxDl@zB`@z@LLB^Dl@Hj@Hj@J\\FNBXDb@Hz@Lx@NXDrGjAn@H|GdA|B^pARLBr@LhBXlARHBF@F@F@D@H@pBZLBfBXrF~@RBvGhARDrEdAD@vCz@F@xDvApCnAhB~@bB|@|@h@DDl@\\p@d@XP|BxArIrF~CpB~ExCRLd@VfDlBxDhB\\P`HxClDlAl@RlA^zBp@pGhBfEhAtD`AxEjAr@PHBJBF@xBj@x@TxCv@rFxAbCv@bA\\dA\\tCdA~Ap@vAj@XL`ClApExBzBrApBpA~AjAr@f@x@j@fBtAZXJFJJZV`ClBdCdCxBvBrIjIr@p@HHbA`AlBrBj@n@pBlBf@d@`FvEpAlAfChCvBrBlAjAFFRPRT^\\PR`A|@XVpArAj@h@p@n@|BzBtBpBrCrC`D|CrBnBj@h@tBtBb@d@tDrDvCrCNLPRRPnBnBlCdChAbAdCvBjCnBLJjCdBfCbBvBlAhCrAbChAfChApDtArBp@jBn@dCr@fD`AjD`A`HpBbF|ArBv@lClAl@\\~@f@jAn@lBlA|C|B|AtAlDfDb@f@xA~A`AvAPTRZNRfBrCbBdDp@nAp@~ALZHPZv@l@nBd@zAp@`Cj@zBh@lCPjAZpBj@pEDTN|Ad@zDFp@P~Ad@xDt@xGf@pEBTZ|Cb@nDz@rHHh@t@nFfAvGxArHlAjFv@jDHXPh@|@|Cf@bBPn@hAfD\\`An@jBJZN`@|@hCZ|@FL~@dCPd@|@`CRj@Pd@BHHRhBtFf@|AnAbDd@pAb@nAj@~A@FfAxCLZ@D|AbENb@pAjDdBzEnAlDVr@xAfEr@lBh@tAv@vBtAvDJZfC`HZjAZ|@Z|@x@`C~A`E`BxERX`@`A^x@Xj@j@nAz@dBVf@f@x@Zd@l@v@|@`A^^PNfA|@hEvCxGtE|A`AxBnAvChAb@L`@Jv@PbB^|B`@pAd@`El@NBhAPnARf@HTDvAT^DxB\\f@Ht@L`C^xEv@|B^f@H`Df@NBVDpKpBJBl@LrDv@xBd@|HrBzCz@rBj@n@T~@XfBj@rG|B|@\\VJ|@\\~F~BrI|DjHnDnAl@h@ZPHb@VZPlC|Ar@^fGbDvBhAlDnBnH`EzAx@rItEb@TrItEdJdF`Ah@xAx@dEzB|@f@nH|DpAr@xBlAdB|@x@b@xKvFb@TlKfF|@`@VLdGpCxCrAJFlMrFJF~GnCh@Tl@TvDxAfBp@rFvB|Bv@tHhClJbDrAd@zFdBr@Rz@VzDjAxA`@pFxA`AVbD|@pD`ApJbCbHhBJ@vFhA`B\\fAVTDZHdCj@~H`BbARjFbA|@RvBb@dEz@dB\\~@RnDv@nAVrH~AVFnAVpFhAlCj@r@NfCh@h@JdFdAz@R|@PlDt@vBd@z@PF@HBhCh@VF~@RbB\\vCl@bATTDj@LrH`BxKxBt@PzIfBpBb@F@F@FBH@LBj@LVFhB^lDt@rFjAp@L`Ex@dGnAx@Pt@P~@RLB`B\\`FfArCl@bCf@pFjATDxDv@t@Nj@LjCh@tBd@v@JF@p@JpAPv@LvAPtBVB?rEZhCPr@B`CL^@`CFpABxBDx@B|BJbCLlCRB?fC\\nBTxBZzBb@vBf@rBf@p@Rp@RrC~@b@P\\Ll@T`EvApDvAvDzAdC~@vAj@THTJdA`@LFxBz@FBvBz@@?bDtAdBl@B@HBJDHBl@T^NNF|Aj@p@VdBj@rBx@zFzBrCfAZLVJxBbAtAh@jAh@lCbAhDnAbA`@vBx@dBl@`Bh@h@PhBj@|DnAlBj@bBf@jCr@tA^r@PxCr@RBNBF@|E`AhHxAhDj@b@FnBZrLjB|B^jCn@pBl@pB~@jBjA~AfArBfBrA|Ad@p@l@z@l@jAlBdDvBxDd@x@n@lAzArCLVrBrD|BbEbAfB`@r@z@|Ad@x@f@z@h@x@\\b@RVHJJNLNl@l@p@l@n@h@f@\\JDjBdANFDBVLp@Tj@Pr@PJBn@Lt@Lj@F`AFjAFV@v@?jC?n@?`C?Z@v@?vF@rC@\\?R?`B@j@?xC?zCB`AB~@FjBTZBh@Jl@LJBp@PbAXfA^n@Vp@XdDlBlBjA|A~@^PrAr@`Bj@|@Z|@T~Bd@bAP^FhARrAT|AT~E~@TDVDzB`@^FlDn@fDl@bLpBlGhAbEr@v@NPB^FrAPp@FTBd@DrCV`CPvDZxBPh@DfBNjAJpFb@J@pAJp@Dl@F`F`@j@D|BPzD\\vAL`AFzCVb@BNBl@DfAHd@Bv@HdDX`BLdAHpBPP@^B`AJnAJJ@dAH\\DvARdATbARl@Ph@PjA`@HBRHZNXLbB~@vAz@x@n@@@xAjAnA`AVRdAz@LHv@n@|@r@hBvALJTPz@r@`BpA~@r@nBxABBB@pCpBj@`@v@d@RLb@VdBx@hAh@|@ZNFXJTHTJTAlEz@|C`@pBPvBPdETv@Fn@F@@PBJBFFFJDFFJOPSVMLONu@z@m@l@KNi@h@i@p@w@v@YVUVi@l@g@f@YZWXKPILcBpBGFGFUTgAjAAByB|BSPw@~@SVK\\AH?@?NDRNb@DH@BFJBB@D\\`AZ~@h@dBNb@d@~APn@l@pBfApDHP\\|@x@jBJV@Db@hAJVTp@t@jCn@tBNf@z@vCJZ\\lAl@nBVz@Nf@Lb@b@zAZdATv@b@tAv@bC@DBFOPEHELMNILqBfCKPKLEHEHGHKNEFEFORKPIF?L?FCFk@x@QTSDm@r@Yd@m@r@KLSV[`@QVaBtBgAzAWZa@h@[`@u@~@JJv@r@`HbHVVNNr@n@FFHFO\\ITIRg@nAQ`@IP_AxB_@z@CDEHoAtCg@hAmAvCiAdCCV?J?F@JDJBHNNd@V\\Pb@XLFNHRLMVEFIPIL_@x@OZq@~AELc@x@i@vAeBrDaAxB}AnDuA|C_ArBg@hAy@fBmBdEq@|AGNYx@Or@Mv@Et@Ef@AJ[bFYxDARMbC?bB@r@BdAB`@@\\[?aBDkDHS@c@@O?G?aAHaAJk@Jw@LI@u@PcBb@kA`@wAj@MFs@\\A@OHcAl@a@VkBtAw@r@w@v@KLe@h@w@bAOPk@x@cAtAGFmAzASVEFCDaBrBq@z@uAtA{@lA]b@I`@C\\Jp@\\~@|AtC`@v@BBZj@\\p@fBhDfAxBtGtLR\\bBhCxApBlAbBT\\@B^j@RZNVb@n@x@|At@xAB@DJd@|@`AbBTd@FLXh@b@`ADJn@pAXl@DLJRP^R`@j@vA`BvDb@~@FTFRJl@Nn@BLFTQLMHMJWRo@d@OJcAt@}C|BoA`AGBc@\\JPXh@HPBHBJBH@T@Z?X?^@dB@`A@nCBlE?L?NAp@?BC^Ej@CPKhAGJEb@w@rJCVc@hFQjBe@EiBSoC[{BWi@IHo@k@Iw@IQCCGFg@Dg@DMFAJ@xANBDB@?HCREb@Eb@In@k@G??YEq@GoBUw@rIATw@pJUrCe@|EEb@Eb@m@bH_@jEI~@Ef@Gv@Gj@Al@?V?L@NB^@JF^TpAHb@DVFXz@pE^tBZ`Bv@dENz@RlAL~@Hb@BPRr@FPRf@@DPd@N`@@FFNQJgAf@SH}FpCyCtA{Br@}Ab@a@LC?IBe@NMBq@RsDfAA?E@e@Rs@\\_@RYP_BjAUPyAhAgAv@c@Xw@d@c@ToAh@iAd@EBmAd@{@\\mBz@e@RaA^KDwDjAQF}@XgDfAw@VSFYHa@LwDlAa@LYHkDfAEBUFs@VoBp@IDWHSHMDm@PgBl@o@RMDw@TcA\\oBn@SFWFg@Ne@XMHEDCDAHAL@HBJFFNL`@ZVR\\Tl@`@h@\\p@`@TLXNZNf@TFNfC`AvChAB?BBr@R\\HH@RFxAZzATx@L|Ch@jARXDhAPnBZxARzAVvDl@TD~Cf@TDdC`@XDdEp@r@Lf@FJB`Fx@@?v@LtF|@xCf@ZDxF~@pEr@TDbBX|Ev@tCl@lBd@NDb@JzC`AxCjApDbBjFhCn@Z`@RRJNHLDXNfAh@jJrEbMdGbHfDdCnAxE|BtAp@jB|@d@TbHhDn@\\vAt@hAp@fFdDz@r@zAlAvEtEdBlBzBhCNPHHDDTVPRPR|BlCpB~BJJBBpGpHpB|BNP^d@^`@NPf@j@rAzAtElF~BnClKxLlDpDbBvAvB`B`C~ApAx@zBpAtAv@`GjD|DzBpDrB~CfBdDlBxHlEpAt@xEnCvHjEtC|AtEbC`EjBrDzAvClAFBlFzBhHpCpIhDzAl@`E`Bt@ZjAd@|B`AjLlEpAh@tAj@r@PB@F@JB^Hz@PxANpBPtBBj@AjAC|AMDAxBc@~@Un@M`@Mj@UdAe@pAq@^SBAfAu@dA{@^_@n@q@p@{@V[dAaBJQzAeCn@gAPYLU~G{K~CkFr@kAfBuCxCeFpAyBt@qAzAiCxAaC`A}Ad@k@DGFIX]nA{A`A{@jA}@tA}@nAq@jAi@NG@A`@OXK`@KnBk@BAFApEkA|Bk@fFsAnD}@ZGh@OlIwB`B_@~@UhBc@tB]nAM^E`BKVAFAP?~@EhA?J?J?`BBzBD|@BT@H?r@@~ABnA@hB?xAIbBSbBWjB_@bBg@fBo@@?t@YZMx@a@lKkEpAi@pAg@\\OtF}BbEeBxH_DjFwBVKlIiDxD_BpJyDJGhL_FhAc@DAJEz@]XKpEcBb@OhBo@rCy@NGxAa@FAJETEvBi@p@OHCFAFADCFAlAY|JsB|IgBd@I`Ey@j@KfDq@ZGrAWd@W~@UbDw@l@SlAe@j@a@|@y@x@y@bAaA`A{@h@c@POXMTORGTGLAXCd@?b@Bv@FV@e@hFOnAOzAmAhJOfAMfAWlBUtBWdCGdAC\\Gx@I`B?j@AxC?fCFfDDtAF`A@TFz@L`ATvBRpAhCdP@Lt@`E`AlF\\hBZtCj@nGRtCFxAB`@?D@L?B?NHvBBjBNbCLv@X~ARv@ZtAt@rC`@hBPdALdADl@@j@@hAA\\?R?PAFBXDn@LhAFz@Jz@Rn@Xt@`@j@Z\\f@^h@Zp@Tx@LX?jAL|@H|@Nx@Vx@h@n@b@ZRPJ@?B@B?B?LBF?HBD@F@@@DBB@BBBDBF@F@F?FAHCJFPDNFLHNT\\?NR`@Td@f@hATb@N\\j@hA~@lBl@bAFJV^LNl@|@vBpC`BvBTZBBbC~CrBpCLRn@x@^d@PVd@p@LTRXTb@LDFLT\\P`@DJVl@`@|@HPNb@L^Rn@?HRj@d@xAz@bDJb@h@dBPb@Tj@JVLVd@r@h@t@VZJHf@f@LHPPXRj@^ZNVNLFb@PVLPB`@LHBTFNBLBj@HB?l@HvARRBx@Lh@HF@`C\\ZDbBVpBXD@bBVd@HLBf@NJBRHNF^Pl@^B@DDR?NNFFRRLJHHb@b@BBLNZZ@BVVLN^`@VVXXTRXTLJLJHDBBJDLFNHJF^NJDRDB@XFRDVDNBZBhAL|@Jj@H~@Pf@JDEFCFA@?F?H?F@FBFDBB@@BFBH@F\\TZRb@Xt@f@RNh@b@\\\\VXTVJLLPJNFJJNNVLVXl@JXLXFRJTBHHZH^FTJf@DVHf@PfAr@fEz@nFNbALz@Hf@DNDR@FFVLb@HXPd@FLHVJRTd@LVR\\R\\NT^d@JLVXTTNLNJXRf@\\h@^r@d@n@`@lAt@b@XRNNL^Zd@d@PRNNPTFBB@FF\\^TVD?JBFDDFBDBF?F?F?FJ`@Ld@FPFPVl@N^FPL^Nd@Vv@BJJZJ^h@vBJb@JXL\\Tp@P^N\\LVHPR^\\h@HLFH`@^D?B?B@@?B@@@DDBDBD?@@F?BABTb@HHPTRRh@j@NLXV`@Xb@Zj@`@\\PZP`@T\\PZL^NPF\\LNDPFXHZF~Cj@bBZj@L|@P`ATnBh@r@Tb@LzAb@|@RPDJ@\\DFl@BZ@NHl@Hz@PjB@DPlBJvAHdAHdAJdBB^FrAFz@@T@ZBb@@THBDF@@BD@H?R?@CL@pAB|AHrAFx@Dp@Ht@Hf@Hj@Hf@L\\Pj@Tx@JTFRLZpAtDFRFR\\t@HVHLTZJLH@F?FBFD@?DFBD@D?H?LABHPJNRVb@f@h@f@`@b@\\Z`@\\f@^d@Zh@\\l@ZnBfAxAx@|BtAVNF?LBDDJJ@D@D?H?LGLEFKDEBC?I@G\\EXA\\G~@E\\MlDGrBE`A?\\GfBGfBQ`FMjEY|IEfA?FAVKtCGfBEdBARAPA\\Cj@GbBIdCKnCEhBA@?VK~BErACn@Cl@?PMTATCLUzAIb@M`@IXUh@MXUZDDdArA~@lAZ]DKrA{CFODWt@mD@M?Q?QcA@[@uBDBM@UIWHuBDmA?SHmB@WHkCHsBHeCD{AFsA@[FgBFeBFeB@q@B[DkADsATgGNkENcFDgBHgBP_GH{BH_CFgAEEAK?S?CBI?CDGFEJCJAF?LBDDJJ@Dp@`@NJtAz@dBhA^u@FK@KDsAHeBLwD\\yJFiBTaHBw@?KDKHKHCJAh@@R?|A@hA?VmMBeA?IBcABc@Fc@He@Pk@Pg@BGVc@DGNWX]Z]h@i@n@o@Z[RWV_@HMDGBEN[JW?A@CHUH]@EFUD]Bc@Ba@?[?a@C}@Ey@IgAC_@A]E_@AGEWUg@IEGKCSAMBSNOFEFAN?PDFDFHh@Dt@AB?rAE~@Er@CL?z@EN?hDML?l@C^Ax@Cl@CXGb@OFIHGDCFAD?D?HaABQJiAb@qEBQNgBPcBH_AZ{CJgAN{ALuAFq@`@yDTgCBUFs@LuAJaADc@Di@JcAVeCZcDNuAF_A^yDP_BJoALgABUX}CZiDLsALmAXaDNgBFq@H{@Dg@H_ALkA@OB]N}Ap@iH@IFi@D]VcDJoBJkD?WAu@?g@Gu@AMAQOsBKoAAOI_AGw@AWCe@?Q?U?M?U@[?CHw@BUBOD[Ha@FQJ[HSHWn@iAj@eAr@oAn@gA@C`@s@t@oA`@q@@Cv@yAv@uAd@}@@CRg@Zo@BIf@}AHWFQJa@BOR_AFUJi@N}@F]DSd@oCgDcEc@i@OS{@eAc@g@qA}AiByBmIaKsCmDW]S]c@q@[o@IOGIUa@K[KSa@}@K]IUSo@Qu@Qq@Ki@CGACMs@Ks@Is@Ky@I}@G}@GaAGeAAMIuAGaAEu@Eg@Gi@Gi@Gg@Gc@Ig@Oo@Kc@Mg@Qm@Uy@Qi@[}@]{@a@_Aa@{@Ym@]o@IKk@_AAEe@q@U]EI]k@Yg@Uc@Ue@Se@Oa@W[S[OQSKWIQCOAC?YA_@JcAXMBq@Dg@AMEYG[O[S[a@QSo@{@_@e@w@cAACQQUSi@]k@_@k@WqAk@aHwCCCkAk@UMYKoAs@ECw@c@{@i@OI}AeAoB}ASSaAcAwBwBgCuCs@aAuA}B[UsAmByDaH{@cBEKIKECIQEGQ]o@gAgAyAi@m@{@}@q@k@sAcAcBaASM{AaAu@g@iAcA_AiAw@uAo@wAIUK[Me@[aBAGKw@AOAMAE?KCg@C]Em@C}@@_ADgADaAHkANyAVaBNk@Nu@ZmAZcAb@mAx@cBbCkEd@_Ad@eA^}@ZaAb@{AXeAJq@r@uEJi@ZmD?G^sDn@yGx@_KRoCH{@DeAJwBDy@AGDaD@y@BoA@y@?cAA[?c@EyAE_BGu@Gi@CMOu@Uy@AEMY_@w@]o@e@m@c@g@i@k@q@o@q@k@y@o@u@g@kBqACE}FuD_@WMI}AmA_@YECIGYU_EoDIGUS{DcEgIcK{AuBcBeDKS_C{EYi@k@iAyC_H}BgFq@qAq@qAm@eAcBeCgBiCSYaDyEwBaDcD{Ec@m@_AuA{@qAIKkC{Ds@cAQUOUKOg@u@GIyAyBQUmAmB}@qAIMMYa@aAISi@oASe@s@yBs@wBWy@IQQi@Um@_@}@c@eAc@aACGe@}@Wi@KQWe@g@y@e@u@i@w@i@u@sDgEc@e@EEMK][e@a@USMKa@[a@[i@_@YSGEIEECqBoAm@[k@Ys@]m@We@Se@Qe@Qi@Sg@Om@Os@QwDw@aASg@Ku@Iw@Io@GOAaAEm@Eq@Ac@CgAAw@?E?qAAS?U?K?QAc@?qCCsCCa@?{@A{CCmBAqCE{CAoAAaA?k@Ag@Cc@Cm@Ii@Ii@Me@Mk@UAAg@Ye@[a@]YY[_@_@e@S[KM_@o@_@q@g@{@Yg@U]ACW]Y[c@c@e@_@e@Wc@Wa@Qc@Qi@KEASCe@Ig@Ee@Ai@AC?c@?wACq@?aAAeA?cAAiAAI?c@?i@?yACGAc@C[CMEGAQEe@S_@Q_@SQOMKWWECACa@g@AAKQWe@Uc@CII]I_@BYEo@ASAIAWIoCKgDGyA?KCm@KoE@G?_@Ai@?aA?O?M?sD?uCAoA?M?q@AcB?YAgBCgB?KAm@CaB?OAMAaF?g@AS?qB?kA?eBCECCAC?AAC?SCc@?W?{@?i@?w@BqA?KBcABy@DkBD_C?QESESCCACEIGCEIGEMGMEKAmBAoA?W?qC@KAIEGIEIAI?K?K?m@AKEIGEGEIAWAu@FmCPg@DUBc@Bg@Dc@BI@eAH}@F}@FsAJwAJM?I@K@G@m@DIE_@Bg@DO}DEs@ImBQ_DUaDi@gJI?",
+                "description": "JHB van",
+                "internal_id": 2900984484,
+                "profile": "default",
+                "adopted_capacity": [
+                    12,
+                    6000
+                ]
+            }
+        ],
+        "routing_profiles": {
+            "default": {}
+        }
+    },
+    "status": "Ok",
+    "message": ""
+}

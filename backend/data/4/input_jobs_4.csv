@@ -1,0 +1,9 @@
+ID,Description,Location Lat,Location Lng,Pickup Quantity,Delivery Quantity,Service Time
+J1,Soweto (dry),-26.2678,27.8585,0,2,480
+J2,Sandton (dry),-26.1076,28.0567,0,2,480
+J3,JHB CBD (dry),-26.2023,28.0436,0,1,420
+J4,Midrand (dry),-26.1710,28.0473,0,2,480
+J5,Melville (dry),-26.0941,28.0010,0,1,420
+J6,Pietermaritzburg (dry),-29.6006,30.3794,0,2,540
+J7,Bloemfontein (dry),-29.1211,26.2140,0,2,540
+J8,Stellenbosch (dry),-33.9344,18.8610,0,2,540

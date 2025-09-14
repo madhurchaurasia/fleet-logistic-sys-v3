@@ -1,0 +1,5 @@
+id,vehicle_description,capacity,start_latitude,start_longitude,end_latitude,end_longitude,shift_start,shift_end,max_tasks
+Van-JHB-01,JHB day van,12;6000,-26.2041,28.0473,-26.2041,28.0473,1753747200,1753833600,
+Van-CT-01,CT day van,10;5000,-33.9249,18.4241,-33.9249,18.4241,1753747200,1753833600,
+Van-PTA-01,PTA day van,10;5000,-25.7479,28.2293,-25.7479,28.2293,1753747200,1753833600,
+Van-DBN-01,DBN day van,10;5000,-29.8587,31.0218,-29.8587,31.0218,1753747200,1753833600,
