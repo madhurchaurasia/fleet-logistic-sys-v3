@@ -56,10 +56,28 @@
     <label>TomTom API Key:</label>
     <input id="apiKey" placeholder="TT_API_KEY" value="" style="width:260px;padding:6px 8px"/>
     <button id="loadBtn">Load</button>
+    <button id="optBtn" title="Show optimized route">Optimize Route</button>
+    <button id="navBtn" title="Animate along route">Start Navigation</button>
+    <button id="pauseBtn" title="Pause/Resume" disabled>Pause</button>
+    <label class="badge" style="display:flex;align-items:center;gap:4px">Speed
+      <select id="navSpeed">
+        <option value="0.5">0.5x</option>
+        <option value="1" selected>1x</option>
+        <option value="2">2x</option>
+        <option value="4">4x</option>
+      </select>
+    </label>
+    <label class="badge" style="display:flex;align-items:center;gap:4px;cursor:pointer">
+      <input type="checkbox" id="snapStops"/> Snap to stops
+    </label>
+    <label class="badge" style="margin-left:8px">Stops:
+      <select id="stopSelect"></select>
+    </label>
     <span id="meta" class="badge">—</span>
-    <label class="badge" for="dataSelect" style="margin-left:8px">Data:</label>
-    <select id="dataSelect" class="badge"></select>
-    <select id="routeSelect" class="badge" style="margin-left:8px"></select>
+    <span id="assignmentBadge" class="badge" style="margin-left:8px">Assignment: —</span>
+    <label class="badge" style="margin-left:8px">Vehicle:
+      <select id="routeSelect"></select>
+    </label>
     <label class="badge" style="display:flex;align-items:center;gap:4px;cursor:pointer">
       <input type="checkbox" id="debugShowAll" /> All points
     </label>
@@ -82,48 +100,40 @@
     catch(e){ console.error(e); alert('Failed to load TomTom SDK. See console for details.'); }
   }
   const routeSelect = document.getElementById('routeSelect');
-  const dataSelect = document.getElementById('dataSelect');
+  const stopSelect = document.getElementById('stopSelect');
+  const navBtn = document.getElementById('navBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const navSpeed = document.getElementById('navSpeed');
+  const snapStops = document.getElementById('snapStops');
+  const assignmentBadge = document.getElementById('assignmentBadge');
+  const optBtn = document.getElementById('optBtn');
   const debugShowAll = document.getElementById('debugShowAll');
 
   let map, markers = [], routeLayers = [];
   let apiKeyGlobal = '';
-  let selectedVersion = null; // null=default latest; 0=base file
+  let selectedSet = null; // number or null
   let geo = null; // current FeatureCollection
+  let nav = { playing:false, paused:false, idx:0, path:[], timer:null, marker:null, lastStepShown:null, speed:1, snap:false };
 
-  function qs(){ return (selectedVersion===null||selectedVersion===undefined) ? '' : `?version=${encodeURIComponent(selectedVersion)}`; }
-
-  async function populateDataSelect(){
-    try{
-      const info = await fetch('/api/data-files').then(r=>r.json());
-      const files = (info.files||[]).sort((a,b)=>a.version-b.version);
-      dataSelect.innerHTML = '';
-      for(const f of files){
-        const opt = document.createElement('option');
-        opt.value = String(f.version);
-        opt.textContent = f.name;
-        dataSelect.appendChild(opt);
-      }
-      const savedVerStr = localStorage.getItem('TT_DATA_VERSION');
-      const availableVers = new Set(files.map(f=>String(f.version)));
-      if(savedVerStr && availableVers.has(savedVerStr)){
-        dataSelect.value = savedVerStr;
-      } else if(info.default){
-        const def = files.find(f=>f.name===info.default);
-        if(def) dataSelect.value = String(def.version);
-      } else if(files.length){
-        dataSelect.value = String(files[files.length-1].version);
-      }
-      selectedVersion = dataSelect.value === '' ? null : Number(dataSelect.value);
-    }catch(e){
-      console.warn('Failed to load /api/data-files', e);
-      dataSelect.innerHTML = '';
-      selectedVersion = null;
-    }
+  function query(){
+    const params = [];
+    if(selectedSet!==null && selectedSet!==undefined) params.push(`set=${encodeURIComponent(selectedSet)}`);
+    return params.length ? `?${params.join('&')}` : '';
   }
 
-  async function loadSummary(){
-    const s = await fetch(`/api/summary${qs()}`).then(r=>r.json());
+  // no data dropdown in viewer
+
+  async function loadResponseSummary(){
+    const res = await fetch(`/api/summary${query()}`);
+    if(!res.ok){
+      console.warn('summary failed', res.status);
+      document.getElementById('meta').textContent = 'routes: 0 | deliveries: - pcs';
+      routeSelect.innerHTML = '';
+      return { routes_count: 0, vehicles: [] };
+    }
+    const s = await res.json();
     document.getElementById('meta').textContent = `routes: ${s.routes_count} | deliveries: ${s?.summary?.delivery?.[0] ?? '-'} pcs`;
+    // Populate vehicles from response
     routeSelect.innerHTML = '';
     (s.vehicles||[]).forEach((v, i) => {
       const opt = document.createElement('option');
@@ -137,7 +147,7 @@
         routeSelect.value = savedIdx;
       }
     }catch{}
-    // Legend
+    // Legend from response
     try{
       const legend = document.getElementById('legend');
       const routeColors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628'];
@@ -155,8 +165,33 @@
     return s;
   }
 
-  await populateDataSelect();
-  await loadSummary();
+  async function loadRequestVehicles(){
+    // Use request-raw to populate vehicles list before optimize
+    try{
+      const req = await fetch(`/api/request-raw${query()}`).then(r=>r.json());
+      const vehicles = Array.isArray(req.vehicles) ? req.vehicles.map(v=>v.id || 'vehicle') : [];
+      routeSelect.innerHTML = '';
+      vehicles.forEach((v, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = `${i+1}: ${v}`;
+        routeSelect.appendChild(opt);
+      });
+      document.getElementById('meta').textContent = `assignment: ${selectedSet ?? '—'} | vehicles: ${vehicles.length} | jobs: ${(req.jobs||[]).length}`;
+    }catch(e){
+      console.warn('Failed loading request vehicles', e);
+    }
+  }
+
+  // get set from URL or from localStorage; display in badge
+  try{
+    const u = new URL(window.location.href);
+    const qsSet = u.searchParams.get('set');
+    selectedSet = qsSet ? Number(qsSet) : (Number(localStorage.getItem('TT_SET_ID')||'')||null);
+  }catch{}
+  if(selectedSet!=null){ try{ localStorage.setItem('TT_SET_ID', String(selectedSet)); }catch{} }
+  assignmentBadge.textContent = `Assignment: ${selectedSet??'—'}`;
+  // Before optimize, we will populate vehicles from request file
 
   // Build fallback LineStrings from step Points ordered by location_index
   function buildFallbackLines(fc){
@@ -200,13 +235,27 @@
     try { window._ttMap = map; } catch(e) {}
     map.addControl(new tt.NavigationControl());
 
-    // Load routes as GeoJSON
-    geo = await fetch(`/api/routes${qs()}`).then(r => r.json());
-    const hasValidServerLines = (geo.features||[]).some(f => f.geometry?.type==='LineString' && Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length>=2);
-    const fallbackLines = hasValidServerLines ? null : buildFallbackLines(geo);
-    console.log('[lines] server valid:', hasValidServerLines, 'fallback lines:', fallbackLines?.features?.length||0);
+    // First, load request points and vehicles AFTER style is ready to avoid race on first load
+    let hasValidServerLines = false;
+    let fallbackLines = null;
+    const loadReq = async () => { try{ await loadRequestPoints(); await loadRequestVehicles(); }catch(e){ console.warn('loadReq failed', e);} };
+    if (typeof map.isStyleLoaded === 'function' ? map.isStyleLoaded() : map.loaded()) {
+      loadReq();
+    } else {
+      map.once('load', loadReq);
+    }
 
     function addOrUpdateLayers() {
+      // If routes data not ready yet, only ensure focus-point and return
+      if(!geo || !geo.features){
+        if(!map.getSource('focus-point')){
+          map.addSource('focus-point', { type: 'geojson', data: { type:'FeatureCollection', features: [] } });
+        }
+        if(!map.getLayer('focus-point')){
+          map.addLayer({ id:'focus-point', type:'circle', source:'focus-point', paint:{ 'circle-radius':9,'circle-color':'#FFD400','circle-stroke-color':'#000','circle-stroke-width':2 } });
+        }
+        return;
+      }
       // Add the entire FeatureCollection as a source
       if(map.getSource('routes')){
         map.getSource('routes').setData(geo);
@@ -301,8 +350,10 @@
       }
 
       // Fit map to selected route
-      const bbox = getBBoxForRoute(geo, Number(routeSelect.value||0));
-      if(bbox){ map.fitBounds(bbox, { padding: 60 }); }
+      if(geo){
+        const bbox = getBBoxForRoute(geo, Number(routeSelect.value||0));
+        if(bbox){ map.fitBounds(bbox, { padding: 60 }); }
+      }
 
       // Build steps list for selected route (default 0)
       const stepsEl = document.getElementById('steps');
@@ -335,9 +386,9 @@
       function renderRoute(idx){
         ensureLayersPresent();
         stepsEl.innerHTML = '';
-        const steps = geo.features.filter(f => f.geometry.type === 'Point' && f.properties.route_index === idx);
+        const steps = (geo?.features||[]).filter(f => f.geometry?.type === 'Point' && f.properties?.route_index === idx);
         console.log('[renderRoute] idx=', idx, 'pointsForRoute=', steps.length);
-        const meta = geo.features.find(f => f.geometry.type==='LineString' && f.properties.route_index===idx)?.properties;
+        const meta = (geo?.features||[]).find(f => f.geometry?.type==='LineString' && f.properties?.route_index===idx)?.properties;
         document.getElementById('routeMeta').textContent = meta ? `vehicle: ${meta.vehicle} | duration: ${humanize(meta.duration||0)}` : '';
         for(const s of steps){
           const div = document.createElement('div');
@@ -377,7 +428,7 @@
       document.getElementById('info').hidden = false;
 
       // Update on select change
-      routeSelect.onchange = () => renderRoute(Number(routeSelect.value||0));
+      routeSelect.onchange = () => { renderRoute(Number(routeSelect.value||0)); try{ renderStopsList(); }catch{} };
       if (debugShowAll) debugShowAll.onchange = () => renderRoute(Number(routeSelect.value||0));
 
       // Surface tile/auth errors
@@ -412,21 +463,345 @@
     }
   }
 
-  async function reloadForDataVersion(){
-    await loadSummary();
-    if(map){
-      geo = await fetch(`/api/routes${qs()}`).then(r=>r.json());
-      const src = map.getSource('routes');
-      if(src && src.setData){ src.setData(geo); }
-      const hasValidServerLines = (geo.features||[]).some(f => f.geometry?.type==='LineString' && Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length>=2);
-      const fb = hasValidServerLines ? { type:'FeatureCollection', features: [] } : buildFallbackLines(geo);
-      const fbSrc = map.getSource('fallback-lines');
-      if(fbSrc && fbSrc.setData){ fbSrc.setData(fb); }
-      if(typeof routeSelect.onchange === 'function') routeSelect.onchange();
-      const idx = Number(routeSelect.value||0);
-      const bbox = getBBoxForRoute(geo, idx);
-      if(bbox){ map.fitBounds(bbox, { padding: 60 }); }
+  async function loadOptimizedRoutes(){
+    // Load response summary + routes and render
+    const s = await loadResponseSummary();
+    if(!map) return;
+    const rr = await fetch(`/api/routes${query()}`);
+    if(!rr.ok){ console.warn('routes failed', rr.status); return; }
+    geo = await rr.json();
+    if(!geo || geo.type !== 'FeatureCollection'){ console.warn('invalid geojson from routes'); return; }
+    const src = map.getSource('routes');
+    if(src && src.setData){ src.setData(geo); }
+    else {
+      map.addSource('routes', { type:'geojson', data: geo });
     }
+    const hasValidServerLines = (geo.features||[]).some(f => f.geometry?.type==='LineString' && Array.isArray(f.geometry.coordinates) && f.geometry.coordinates.length>=2);
+    const fb = hasValidServerLines ? null : buildFallbackLines(geo);
+    const fbSrc = map.getSource('fallback-lines');
+    if(fb && fbSrc && fbSrc.setData) fbSrc.setData(fb);
+    if(!fb && fbSrc && fbSrc.setData) fbSrc.setData({ type:'FeatureCollection', features: [] });
+    // Keep request points above lines
+    try{ map.moveLayer('req-points'); }catch{}
+    // Ensure rendering layers exist (duplicate minimal logic)
+    const routeColors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628'];
+    if(!map.getLayer('route-lines-all')) map.addLayer({
+      id: 'route-lines-all', type: 'line', source: 'routes',
+      filter: ['==', ['geometry-type'], 'LineString'],
+      paint: {
+        'line-width': 3,
+        'line-opacity': 0.85,
+        'line-color': ['match', ['get','route_index'], 0, routeColors[0], 1, routeColors[1], 2, routeColors[2], 3, routeColors[3], 4, routeColors[4], routeColors[5]]
+      }
+    });
+    if(!map.getLayer('route-lines-selected')) map.addLayer({
+      id: 'route-lines-selected', type: 'line', source: 'routes',
+      filter: ['all', ['==', ['geometry-type'], 'LineString'], ['==', ['get','route_index'], 0]],
+      paint: {
+        'line-width': 6,
+        'line-opacity': 1,
+        'line-blur': 0.2,
+        'line-color': ['match', ['get','route_index'], 0, routeColors[0], 1, routeColors[1], 2, routeColors[2], 3, routeColors[3], 4, routeColors[4], routeColors[5]]
+      }
+    });
+    if(fb){
+      if(map.getSource('fallback-lines')) map.getSource('fallback-lines').setData(fb);
+      else map.addSource('fallback-lines', { type:'geojson', data: fb });
+      if(!map.getLayer('fallback-lines-all')) map.addLayer({ id: 'fallback-lines-all', type:'line', source:'fallback-lines', layout:{ 'line-cap':'round','line-join':'round' }, paint:{ 'line-width':3,'line-opacity':0.85,'line-color':['match',['get','route_index'],0,routeColors[0],1,routeColors[1],2,routeColors[2],3,routeColors[3],4,routeColors[4],routeColors[5]] }});
+      if(!map.getLayer('fallback-lines-selected')) map.addLayer({ id:'fallback-lines-selected', type:'line', source:'fallback-lines', filter:['==',['get','route_index'],0], layout:{ 'line-cap':'round','line-join':'round' }, paint:{ 'line-width':6,'line-opacity':1,'line-blur':0.2,'line-color':['match',['get','route_index'],0,routeColors[0],1,routeColors[1],2,routeColors[2],3,routeColors[3],4,routeColors[4],routeColors[5]] }});
+    }
+    // Reapply selection and fit bounds
+    if(typeof routeSelect.onchange === 'function') routeSelect.onchange();
+    const idx = Number(routeSelect.value||0);
+    const bbox = getBBoxForRoute(geo, idx);
+    if(bbox){ map.fitBounds(bbox, { padding: 60 }); }
+    // Build stops dropdown for selected vehicle
+    renderStopsList();
+    // Prepare navigation path for current vehicle
+    buildNavPath();
+  }
+
+  // Build the stops list (start -> jobs -> end) for the selected vehicle
+  function getStopsForVehicle(){
+    // Build stops strictly in the order provided by the optimized response
+    if(!geo || !geo.features) return [];
+    const vIdx = Number(routeSelect.value||0);
+    const ordered = [];
+    for(const f of geo.features){
+      if(!(f && f.geometry && f.geometry.type==='Point')) continue;
+      if(Number(f.properties?.route_index) !== vIdx) continue;
+      const [lng, lat] = f.geometry.coordinates || [];
+      const t = f.properties?.step_type || 'stop';
+      const id = f.properties?.id;
+      const label = (t==='start'||t==='end') ? t : (id ?? 'job');
+      ordered.push({ label, lng, lat, type: t });
+    }
+    return ordered;
+  }
+
+  function renderStopsList(){
+    if(!stopSelect) return;
+    const stops = getStopsForVehicle();
+    stopSelect.innerHTML = '';
+    if(!stops.length){
+      const opt = document.createElement('option');
+      opt.textContent = '(no stops)'; opt.value='';
+      stopSelect.appendChild(opt);
+      stopSelect.disabled = true;
+      return;
+    }
+    stopSelect.disabled = false;
+    // Add a placeholder so the first real selection (e.g., start) always triggers change
+    const ph = document.createElement('option');
+    ph.textContent = 'Select stop…'; ph.value = '';
+    ph.disabled = true; ph.selected = true; ph.hidden = true;
+    stopSelect.appendChild(ph);
+    stops.forEach((s, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = `${i+1}. ${s.label} (${s.lat?.toFixed?.(4)||'?'}, ${s.lng?.toFixed?.(4)||'?'})`;
+      stopSelect.appendChild(opt);
+    });
+  }
+
+  // Jump to stop when selected
+  if(stopSelect){
+    const goToIdx = (idx) => {
+      const stops = getStopsForVehicle();
+      const s = stops[idx];
+      if(!s) return;
+      // set focus
+      const fc = { type:'FeatureCollection', features:[{ type:'Feature', geometry:{ type:'Point', coordinates:[s.lng, s.lat] }, properties:{} }] };
+      const src = map.getSource && map.getSource('focus-point');
+      if(src && src.setData) src.setData(fc);
+      map && map.flyTo && map.flyTo({ center:[s.lng, s.lat], zoom: 13 });
+    };
+    stopSelect.onchange = () => {
+      const v = stopSelect.value;
+      if(v === '') return; // placeholder
+      const idx = Number(v);
+      goToIdx(idx);
+    };
+    // Optional: clicking the select again will re-center on the current selection
+    stopSelect.addEventListener('click', () => {
+      const v = stopSelect.value; if(v==='') return; goToIdx(Number(v));
+    });
+  }
+  // Haversine distance in meters
+  function distMeters(a,b){
+    const toRad = x=>x*Math.PI/180;
+    const R=6371000; const dLat=toRad(b[1]-a[1]); const dLng=toRad(b[0]-a[0]);
+    const s1=toRad(a[1]); const s2=toRad(b[1]);
+    const h = Math.sin(dLat/2)**2 + Math.cos(s1)*Math.cos(s2)*Math.sin(dLng/2)**2;
+    return 2*R*Math.asin(Math.sqrt(h));
+  }
+  function buildNavPath(){
+    nav.path = [];
+    nav.idx = 0;
+    const vIdx = Number(routeSelect.value||0);
+    if(!geo||!geo.features) return;
+    const line = geo.features.find(f => f.geometry && f.geometry.type==='LineString' && Number(f.properties?.route_index)===vIdx);
+    let coords = (line && Array.isArray(line.geometry.coordinates)) ? line.geometry.coordinates.slice() : [];
+    // If snapping, or no lines, use stop points as path
+    if(nav.snap || coords.length<2){
+      const stops = getStopsForVehicle();
+      coords = stops.map(s=>[s.lng,s.lat]);
+    }
+    // Densify for smooth animation (~100m between points)
+    const maxStep = 120; // meters
+    for(let i=0;i<coords.length-1;i++){
+      const a = coords[i], b = coords[i+1];
+      const d = distMeters(a,b);
+      const steps = Math.max(1, Math.ceil(d/maxStep));
+      for(let k=0;k<steps;k++){
+        const t = k/steps;
+        nav.path.push([a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t]);
+      }
+    }
+    nav.path.push(coords[coords.length-1]);
+  }
+  function ensureNavMarker(){
+    if(nav.marker) return nav.marker;
+    const el = document.createElement('div');
+    el.className = 'nav-marker';
+    el.style.width = '22px'; el.style.height='22px'; el.style.borderRadius='50%';
+    el.style.background = '#FFD400'; el.style.border='2px solid #000';
+    el.style.boxShadow='0 0 6px rgba(0,0,0,0.35)';
+    const dot = document.createElement('div');
+    dot.style.width='6px'; dot.style.height='6px'; dot.style.borderRadius='50%'; dot.style.background='#000';
+    dot.style.position='absolute'; dot.style.left='50%'; dot.style.top='50%'; dot.style.transform='translate(-50%,-50%)';
+    el.appendChild(dot);
+    nav.marker = new tt.Marker({ element: el }).setLngLat([0,0]).addTo(map);
+    return nav.marker;
+  }
+  function stopNavigation(){
+    if(nav.timer){ clearInterval(nav.timer); nav.timer=null; }
+    nav.playing=false; nav.paused=false;
+    if(navBtn) navBtn.textContent = 'Start Navigation';
+    if(pauseBtn){ pauseBtn.disabled = true; pauseBtn.textContent = 'Pause'; }
+  }
+  function setNavTimer(){
+    if(nav.timer){ clearInterval(nav.timer); nav.timer=null; }
+    const fps = nav.snap ? 1 : 30; // snap moves stop-to-stop; non-snap smooth
+    const interval = (nav.snap ? Math.max(250, 1200/nav.speed) : 1000/fps);
+    nav.timer = setInterval(()=>{
+      if(nav.idx >= nav.path.length){ stopNavigation(); return; }
+      // Advance
+      if(nav.snap){
+        // Jump to next significant point
+        nav.idx += 1; // one path point per tick (path is stops when snapping)
+      } else {
+        nav.idx += Math.max(0.25, nav.speed); // speed indexes per tick
+      }
+      const p = nav.path[Math.min(Math.floor(nav.idx), nav.path.length-1)];
+      if(!p) return;
+      try{ nav.marker.setLngLat(p); }catch{}
+      // Follow marker
+      try{ map.easeTo({ center:p, duration:interval, zoom: Math.max(map.getZoom()||0, 12.5) }); }catch{}
+      // Show step popup when close to a stop
+      try{
+        const stops = getStopsForVehicle();
+        for(const s of stops){
+          if(s.label===nav.lastStepShown) continue;
+          if(distMeters(p,[s.lng,s.lat]) < (nav.snap?5:80)){
+            new tt.Popup({closeButton:true}).setLngLat([s.lng,s.lat]).setHTML(s.label).addTo(map);
+            nav.lastStepShown = s.label; break;
+          }
+        }
+      }catch{}
+    }, interval);
+  }
+  function startNavigation(){
+    if(!map) return;
+    if(!nav.path || nav.path.length<2){ buildNavPath(); }
+    if(!nav.path || nav.path.length<2){ alert('No route to navigate. Click Optimize Route first.'); return; }
+    ensureNavMarker();
+    nav.playing=true; nav.paused=false; if(navBtn) navBtn.textContent='Stop Navigation';
+    if(pauseBtn){ pauseBtn.disabled=false; pauseBtn.textContent='Pause'; }
+    nav.idx=0; nav.lastStepShown=null;
+    setNavTimer();
+  }
+  if(navBtn){
+    navBtn.onclick = () => { if(nav.playing) stopNavigation(); else startNavigation(); };
+  }
+  // Rebuild nav path when vehicle changes or routes reload
+  if(routeSelect){ routeSelect.addEventListener('change', ()=>{ buildNavPath(); }); }
+  if(navSpeed){ navSpeed.onchange = () => { nav.speed = parseFloat(navSpeed.value||'1')||1; if(nav.playing && !nav.paused){ setNavTimer(); } }; }
+  if(snapStops){ snapStops.onchange = () => { nav.snap = !!snapStops.checked; buildNavPath(); if(nav.playing && !nav.paused){ setNavTimer(); } }; }
+  if(pauseBtn){
+    pauseBtn.onclick = () => {
+      if(!nav.playing) return;
+      if(!nav.paused){
+        // pause
+        nav.paused = true; if(nav.timer){ clearInterval(nav.timer); nav.timer=null; }
+        pauseBtn.textContent = 'Resume';
+      } else {
+        // resume
+        nav.paused = false; pauseBtn.textContent = 'Pause'; setNavTimer();
+      }
+    };
+  }
+  // Always refresh stops list when vehicle selection changes
+  if(routeSelect){
+    routeSelect.addEventListener('change', () => {
+      try{ renderStopsList(); }catch{}
+    });
+  }
+
+  async function loadRequestPoints(){
+    try{
+      const r = await fetch(`/api/request-points${query()}`);
+      if(!r.ok) return; // no request file, skip silently
+      const fc = await r.json();
+      // Ensure style is loaded before adding layers
+      if(!(typeof map.isStyleLoaded==='function'? map.isStyleLoaded(): map.loaded())){
+        await new Promise(res => map.once('load', res));
+      }
+      // Add/Update source
+      if(map.getSource('request')) map.getSource('request').setData(fc);
+      else map.addSource('request', { type:'geojson', data: fc });
+      // Always add clear circle layer for visibility
+      if(!map.getLayer('req-points')){
+        map.addLayer({
+          id:'req-points', type:'circle', source:'request',
+          paint:{
+            'circle-radius': ['match',['get','point_type'], 'start', 7, 'end', 7, 6],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#000',
+            'circle-color': ['match',['get','point_type'], 'start', '#2ecc71', 'end', '#e74c3c', /*job*/ '#1e90ff']
+          }
+        });
+      }
+      // Try a 3D-like icon layer above circles
+      try{
+        await ensurePinIcons();
+        if(!map.getLayer('req-icons')){
+          map.addLayer({
+            id:'req-icons', type:'symbol', source:'request',
+            layout:{
+              'icon-image': ['match',['get','point_type'],'start','pin-start','end','pin-end','job','pin-job','pin-job'],
+              'icon-allow-overlap': true,
+              'icon-size': ['interpolate',['linear'],['zoom'], 6, 0.6, 12, 1.1]
+            }
+          });
+        }
+        try{ map.moveLayer('req-icons'); }catch{}
+      }catch(e){ /* fallback remains circle */ }
+      // Keep request points above routes
+      try{ map.moveLayer('req-points'); }catch{}
+      // Fit to all request points
+      const bbox = (function(){
+        if(!fc?.features?.length) return null; let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity; for(const f of fc.features){ const [x,y]=f.geometry.coordinates; minX=Math.min(minX,x); minY=Math.min(minY,y); maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);} return [[minX,minY],[maxX,maxY]];})();
+      if(bbox) map.fitBounds(bbox, { padding: 60 });
+    }catch(e){ console.warn('request points load failed', e); }
+  }
+
+  // Create simple 3D-looking circular pins using canvas radial gradients
+  let _pinIconsReady = false;
+  async function ensurePinIcons(){
+    if(_pinIconsReady) return;
+    // Wait for style ready so addImage works
+    if(!(typeof map.isStyleLoaded==='function'? map.isStyleLoaded(): map.loaded())){
+      await new Promise(res => map.once('load', res));
+    }
+    const px = Math.max(48, Math.floor((window.devicePixelRatio||1)*36));
+    function makePin(color){
+      const c=document.createElement('canvas'); c.width=c.height=px; const ctx=c.getContext('2d');
+      const cx=px*0.5, cy=px*0.38; const r=px*0.28; const tipY = cy + r + r*0.95;
+      // Shadow
+      ctx.beginPath(); ctx.ellipse(cx, tipY, r*0.7, r*0.35, 0, 0, Math.PI*2);
+      ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.filter='blur(1.5px)'; ctx.fill(); ctx.filter='none';
+      // Pin head gradient
+      const g=ctx.createRadialGradient(cx-r*0.5, cy-r*0.6, r*0.15, cx, cy, r);
+      g.addColorStop(0, '#fff');
+      g.addColorStop(0.15, '#fff');
+      g.addColorStop(0.25, color);
+      g.addColorStop(1, shade(color, -35));
+      // Pin path (teardrop)
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, Math.PI*0.15, Math.PI*0.85, true);
+      ctx.quadraticCurveTo(cx - r*0.9, cy + r*0.9, cx, tipY);
+      ctx.quadraticCurveTo(cx + r*0.9, cy + r*0.9, cx + r*Math.cos(Math.PI*0.15), cy + r*Math.sin(Math.PI*0.15));
+      ctx.closePath();
+      ctx.fillStyle=g; ctx.fill();
+      ctx.lineWidth=Math.max(2, px*0.04); ctx.strokeStyle='#124d7a'; ctx.stroke();
+      // Inner white circle
+      ctx.beginPath(); ctx.arc(cx, cy, r*0.45, 0, Math.PI*2); ctx.fillStyle='#ffffff'; ctx.fill();
+      ctx.lineWidth=Math.max(1, px*0.025); ctx.strokeStyle=shade(color,-25); ctx.stroke();
+      return c;
+    }
+    function shade(hex, lum){
+      // simple hex shade util lum in [-100..100]
+      let h=hex.replace(/[^0-9a-f]/gi,''); if(h.length<6){ h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; }
+      let rgb='#'; for(let i=0;i<3;i++){ let c=parseInt(h.substr(i*2,2),16); c=Math.max(0,Math.min(255, c + Math.round(255*lum/100))); rgb+=('00'+c.toString(16)).slice(-2); } return rgb;
+    }
+    const startImg = makePin('#2ecc71');
+    const jobImg = makePin('#1e90ff');
+    const endImg = makePin('#e74c3c');
+    if(!map.hasImage('pin-start')) map.addImage('pin-start', startImg, { pixelRatio: 1 });
+    if(!map.hasImage('pin-job')) map.addImage('pin-job', jobImg, { pixelRatio: 1 });
+    if(!map.hasImage('pin-end')) map.addImage('pin-end', endImg, { pixelRatio: 1 });
+    _pinIconsReady = true;
   }
 
   function getBBox(geo){
@@ -469,12 +844,20 @@
   document.getElementById('loadBtn').onclick = async () => {
     const key = document.getElementById('apiKey').value.trim();
     if(map && apiKeyGlobal === key){
-      await reloadForDataVersion();
+      // Only load request points + vehicles; do NOT load routes yet
+      await loadRequestPoints();
+      await loadRequestVehicles();
       return;
     }
     try{ if(map && typeof map.remove === 'function') map.remove(); }catch{}
     map = null;
     await boot(key);
+    // Intentionally not loading routes here; Optimize button will load them
+  };
+  // Optimize: reload routes for current selection (keeps request points visible)
+  optBtn.onclick = async () => {
+    if(!map){ alert('Load the map first'); return; }
+    await loadOptimizedRoutes();
   };
   // Pressing Enter in the API key field triggers Load
   document.getElementById('apiKey').addEventListener('keydown', (e) => {
@@ -495,15 +878,37 @@
     const badge = document.getElementById('meta');
     badge.textContent += ` | sdk: ${sdkSource}`;
   }
-  // Legend is rebuilt in loadSummary()
+  // Legend is rebuilt in response summary
 
   // Handle data version changes
-  const dataSelectEl = document.getElementById('dataSelect');
-  dataSelectEl.onchange = async () => {
-    selectedVersion = dataSelectEl.value === '' ? null : Number(dataSelectEl.value);
-    try{ localStorage.setItem('TT_DATA_VERSION', String(selectedVersion)); }catch{}
-    await reloadForDataVersion();
-  };
+  const dataSelectEl = null; // removed in viewer
+
+  // Handle set changes
+  const setSelectEl = null; // removed in viewer
+
+  // Upload CSVs to selected set
+  if(false){ // upload removed
+    const sid = setSelect.value ? Number(setSelect.value) : null;
+    if(!sid){ alert('Select a set first'); return; }
+    const jobs = document.getElementById('jobsFile').files[0] || null;
+    const vehicles = document.getElementById('vehiclesFile').files[0] || null;
+    if(!jobs && !vehicles){ alert('Choose at least one CSV to upload'); return; }
+    const fd = new FormData();
+    if(jobs) fd.append('jobs', jobs);
+    if(vehicles) fd.append('vehicles', vehicles);
+    const r = await fetch(`/api/mock-sets/${encodeURIComponent(sid)}/upload`, { method: 'POST', body: fd });
+    const j = await r.json();
+    // Show simple previews below
+    function renderTable(elId, prev){
+      const el = document.getElementById(elId);
+      if(!el) return;
+      const rows = prev?.rows || [];
+      el.innerHTML = rows.length ? `<table border="1" cellpadding="4">${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>` : '<em>No preview</em>';
+    }
+    renderTable('jobsPreview', j.preview?.jobs);
+    renderTable('vehiclesPreview', j.preview?.vehicles);
+    alert('Upload complete');
+  }
 
   // Click on step points to focus and reverse geocode
   try{
@@ -518,6 +923,27 @@
       map.flyTo({ center: [lng, lat], zoom: 13 });
       const name = await (async()=>{ try{ const u = `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${encodeURIComponent(apiKeyGlobal)}&radius=50`; const r = await fetch(u); if(!r.ok) return null; const j=await r.json(); return j?.addresses?.[0]?.address?.freeformAddress||null; }catch{return null;} })();
       if(name){ new tt.Popup({ closeButton: true }).setLngLat([lng,lat]).setHTML(name).addTo(map); }
+    });
+    map.on('click', 'req-points', async (e) => {
+      const f = e.features && e.features[0];
+      if(!f) return;
+      const [lng, lat] = f.geometry.coordinates;
+      if(map.getSource('focus-point')){
+        const fc = { type:'FeatureCollection', features:[{ type:'Feature', geometry:{ type:'Point', coordinates:[lng,lat] }, properties:{} }]};
+        map.getSource('focus-point').setData(fc);
+      }
+      map.flyTo({ center: [lng, lat], zoom: 13 });
+    });
+    // Also allow clicking on 3D icons layer
+    map.on('click', 'req-icons', async (e) => {
+      const f = e.features && e.features[0];
+      if(!f) return;
+      const [lng, lat] = f.geometry.coordinates;
+      if(map.getSource('focus-point')){
+        const fc = { type:'FeatureCollection', features:[{ type:'Feature', geometry:{ type:'Point', coordinates:[lng,lat] }, properties:{} }]};
+        map.getSource('focus-point').setData(fc);
+      }
+      map.flyTo({ center: [lng, lat], zoom: 13 });
     });
   }catch{}
 })();
