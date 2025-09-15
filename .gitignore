@@ -12,7 +12,6 @@ __pycache__/
 
 # Node modules (if frontend uses JS frameworks)
 frontend/node_modules/
-vendor/
 
 # OS / IDE files
 .DS_Store
