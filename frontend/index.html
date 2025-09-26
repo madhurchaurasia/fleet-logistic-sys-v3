@@ -58,6 +58,7 @@
     <button id="loadBtn">Load</button>
     <button id="optBtn" title="Show optimized route">Optimize Route</button>
     <button id="navBtn" title="Animate along route">Start Navigation</button>
+    <button id="driverNavBtn" title="Push navigation command to driver">Start Navigation for Driver</button>
     <button id="pauseBtn" title="Pause/Resume" disabled>Pause</button>
     <label class="badge" style="display:flex;align-items:center;gap:4px">Speed
       <select id="navSpeed">
@@ -67,9 +68,6 @@
         <option value="4">4x</option>
       </select>
     </label>
-    <label class="badge" style="display:flex;align-items:center;gap:4px;cursor:pointer">
-      <input type="checkbox" id="snapStops"/> Snap to stops
-    </label>
     <label class="badge" style="margin-left:8px">Stops:
       <select id="stopSelect"></select>
     </label>
@@ -78,10 +76,6 @@
     <label class="badge" style="margin-left:8px">Vehicle:
       <select id="routeSelect"></select>
     </label>
-    <label class="badge" style="display:flex;align-items:center;gap:4px;cursor:pointer">
-      <input type="checkbox" id="debugShowAll" /> All points
-    </label>
-    <button id="clearKeyBtn" title="Clear stored key">Clear</button>
   </div>
 </header>
 <div id="map"></div>
@@ -102,18 +96,29 @@
   const routeSelect = document.getElementById('routeSelect');
   const stopSelect = document.getElementById('stopSelect');
   const navBtn = document.getElementById('navBtn');
+  const driverNavBtn = document.getElementById('driverNavBtn');
   const pauseBtn = document.getElementById('pauseBtn');
   const navSpeed = document.getElementById('navSpeed');
-  const snapStops = document.getElementById('snapStops');
   const assignmentBadge = document.getElementById('assignmentBadge');
   const optBtn = document.getElementById('optBtn');
-  const debugShowAll = document.getElementById('debugShowAll');
 
   let map, markers = [], routeLayers = [];
   let apiKeyGlobal = '';
   let selectedSet = null; // number or null
   let geo = null; // current FeatureCollection
   let nav = { playing:false, paused:false, idx:0, path:[], timer:null, marker:null, lastStepShown:null, speed:1, snap:false };
+  let vehiclesList = [];
+
+  function normalizeVehicleName(name){
+    return (name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  const driverRouteMap = {
+    vanjhb01: { routeId: 'route-1', deviceId: 'emulator-5554' },
+    vanct01: { routeId: 'route-2', deviceId: 'emulator-5554' },
+    vanpta01: { routeId: 'route-3', deviceId: 'emulator-5554' },
+    vandbn01: { routeId: 'route-4', deviceId: 'emulator-5554' },
+  };
 
   function query(){
     const params = [];
@@ -132,10 +137,11 @@
       return { routes_count: 0, vehicles: [] };
     }
     const s = await res.json();
+    vehiclesList = Array.isArray(s.vehicles) ? s.vehicles.slice() : [];
     document.getElementById('meta').textContent = `routes: ${s.routes_count} | deliveries: ${s?.summary?.delivery?.[0] ?? '-'} pcs`;
     // Populate vehicles from response
     routeSelect.innerHTML = '';
-    (s.vehicles||[]).forEach((v, i) => {
+    vehiclesList.forEach((v, i) => {
       const opt = document.createElement('option');
       opt.value = String(i);
       opt.textContent = `${i+1}: ${v}`;
@@ -191,6 +197,9 @@
   }catch{}
   if(selectedSet!=null){ try{ localStorage.setItem('TT_SET_ID', String(selectedSet)); }catch{} }
   assignmentBadge.textContent = `Assignment: ${selectedSet??'—'}`;
+  if(driverNavBtn){
+    driverNavBtn.hidden = Number(selectedSet) !== 4;
+  }
   // Before optimize, we will populate vehicles from request file
 
   // Build fallback LineStrings from step Points ordered by location_index
@@ -405,9 +414,7 @@
         }
         // Filter visible features to selected route
         if(map.getLayer('route-points')){
-          if (debugShowAll && debugShowAll.checked) {
-            map.setFilter('route-points', ['==', ['geometry-type'], 'Point']);
-          } else if(steps.length > 0){
+          if(steps.length > 0){
             map.setFilter('route-points', ['all', ['==', ['geometry-type'], 'Point'], ['==', ['get','route_index'], idx]]);
           } else {
             console.warn('[renderRoute] No points for route', idx, '— showing all points');
@@ -429,7 +436,6 @@
 
       // Update on select change
       routeSelect.onchange = () => { renderRoute(Number(routeSelect.value||0)); try{ renderStopsList(); }catch{} };
-      if (debugShowAll) debugShowAll.onchange = () => renderRoute(Number(routeSelect.value||0));
 
       // Surface tile/auth errors
       map.on('error', (e) => {
@@ -687,7 +693,6 @@
   // Rebuild nav path when vehicle changes or routes reload
   if(routeSelect){ routeSelect.addEventListener('change', ()=>{ buildNavPath(); }); }
   if(navSpeed){ navSpeed.onchange = () => { nav.speed = parseFloat(navSpeed.value||'1')||1; if(nav.playing && !nav.paused){ setNavTimer(); } }; }
-  if(snapStops){ snapStops.onchange = () => { nav.snap = !!snapStops.checked; buildNavPath(); if(nav.playing && !nav.paused){ setNavTimer(); } }; }
   if(pauseBtn){
     pauseBtn.onclick = () => {
       if(!nav.playing) return;
@@ -706,6 +711,40 @@
     routeSelect.addEventListener('change', () => {
       try{ renderStopsList(); }catch{}
     });
+  }
+
+  if(driverNavBtn){
+    driverNavBtn.onclick = async () => {
+      if(Number(selectedSet) !== 4){
+        alert('Driver navigation control is only available for assignment 4.');
+        return;
+      }
+      const idx = Number(routeSelect.value||0);
+      const vehicleName = (vehiclesList[idx] || '').trim();
+      if(!vehicleName){
+        alert('No vehicle selected.');
+        return;
+      }
+      const mapping = driverRouteMap[normalizeVehicleName(vehicleName)];
+      if(!mapping){
+        alert(`No route mapping found for ${vehicleName}.`);
+        return;
+      }
+      try{
+        const response = await fetch('/api/start-navigation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_id: mapping.deviceId, route_id: mapping.routeId }),
+        });
+        if(!response.ok){
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err?.detail || `HTTP ${response.status}`);
+        }
+        alert(`Navigation started for ${vehicleName}.`);
+      }catch(e){
+        alert(`Failed to notify driver: ${e?.message || e}`);
+      }
+    };
   }
 
   async function loadRequestPoints(){
@@ -868,12 +907,6 @@
     const saved = localStorage.getItem('TT_API_KEY');
     if(saved){ const el = document.getElementById('apiKey'); el.type = 'password'; el.value = saved; }
   }catch{}
-  // Clear key button
-  document.getElementById('clearKeyBtn').onclick = () => {
-    try{ localStorage.removeItem('TT_API_KEY'); }catch{}
-    const el = document.getElementById('apiKey');
-    el.type = 'text'; el.value = '';
-  };
   if(sdkSource && sdkSource !== 'primary'){
     const badge = document.getElementById('meta');
     badge.textContent += ` | sdk: ${sdkSource}`;

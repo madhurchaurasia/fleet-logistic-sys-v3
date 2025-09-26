@@ -1,3 +1,0 @@
-id,vehicle_description,capacity,start_latitude,start_longitude,end_latitude,end_longitude,shift_start,shift_end,max_tasks
-Truck-JHB-01,,12;6000,-26.2041,28.0473,-26.2041,28.0473,1753747200,1753833600,
-Truck-PTA-01,,10;5000,-25.7479,28.2293,-25.7479,28.2293,1753747200,1753833600,

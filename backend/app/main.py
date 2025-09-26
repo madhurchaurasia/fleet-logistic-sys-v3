@@ -1,10 +1,11 @@
 
-from fastapi import FastAPI, Response, Query, HTTPException, UploadFile, File as FF
+from fastapi import FastAPI, Response, Query, HTTPException, UploadFile, File as FF, WebSocket, WebSocketDisconnect
 import logging
 import re
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-import json, os, re, glob
+import json, os, re, glob, time, asyncio
+from pydantic import BaseModel
 from .utils import nb_to_geojson, summarize
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -15,6 +16,34 @@ _FILENAME_BASE = "nextbillion_response"
 _FILENAME_REGEX = re.compile(rf"^{re.escape(_FILENAME_BASE)}(?:_(\d+))?\.json$")
 
 _DATA_CACHE: dict[str, tuple[float, dict]] = {}
+
+
+class ConnectionManager:
+    def __init__(self) -> None:
+        self._connections: dict[str, WebSocket] = {}
+        self._lock = asyncio.Lock()
+
+    async def connect(self, device_id: str, websocket: WebSocket) -> None:
+        await websocket.accept()
+        async with self._lock:
+            self._connections[device_id] = websocket
+        logging.info("WS connected: %s", device_id)
+
+    async def disconnect(self, device_id: str) -> None:
+        async with self._lock:
+            self._connections.pop(device_id, None)
+        logging.info("WS disconnected: %s", device_id)
+
+    async def send_to(self, device_id: str, payload: dict) -> None:
+        async with self._lock:
+            websocket = self._connections.get(device_id)
+        if websocket is None:
+            raise KeyError(device_id)
+        await websocket.send_json(payload)
+        logging.info("WS message sent to %s: %s", device_id, payload)
+
+
+manager = ConnectionManager()
 
 def _list_data_files():
     files = []
@@ -97,6 +126,11 @@ app = FastAPI(title="TomTom Route Viewer", version="1.0.0")
 
 # Serve frontend
 app.mount("/static", StaticFiles(directory=FRONTEND_PATH), name="static")
+
+
+class StartNavigationRequest(BaseModel):
+    device_id: str
+    route_id: str
 
 @app.get("/", response_class=HTMLResponse)
 def upload_page():
@@ -386,3 +420,36 @@ def api_data_files():
         "files": [{"name": f["name"], "version": f["version"]} for f in files],
         "default": default_name,
     })
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    device_id = websocket.query_params.get("device_id")
+    if not device_id:
+        await websocket.close(code=4000)
+        logging.warning("WS rejected: missing device_id")
+        return
+    await manager.connect(device_id, websocket)
+    try:
+        while True:
+            # Consume incoming messages to keep the connection alive; payload ignored.
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        await manager.disconnect(device_id)
+    except Exception as exc:
+        logging.exception("WS error for %s: %s", device_id, exc)
+        await manager.disconnect(device_id)
+
+
+@app.post("/api/start-navigation")
+async def api_start_navigation(req: StartNavigationRequest):
+    payload = {
+        "type": "start_navigation",
+        "route_id": req.route_id,
+        "ts": time.time(),
+    }
+    try:
+        await manager.send_to(req.device_id, payload)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Device not connected")
+    return JSONResponse({"sent": True})
