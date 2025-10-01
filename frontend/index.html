@@ -47,14 +47,15 @@
     .legend{position:absolute;top:72px;right:12px;background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.12);min-width:160px}
     .legend-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
     .swatch{width:12px;height:12px;border-radius:2px;border:1px solid #ccc}
+    .is-hidden{display:none !important}
   </style>
 </head>
 <body>
 <header>
   <strong>TomTom Route Viewer</strong>
   <div class="panel">
-    <label>TomTom API Key:</label>
-    <input id="apiKey" placeholder="TT_API_KEY" value="" style="width:260px;padding:6px 8px"/>
+    <label id="apiKeyLabel" class="is-hidden">TomTom API Key:</label>
+    <input id="apiKey" class="is-hidden" type="password" placeholder="TT_API_KEY" value="" style="width:260px;padding:6px 8px" autocomplete="off"/>
     <button id="loadBtn">Load</button>
     <button id="optBtn" title="Show optimized route">Optimize Route</button>
     <button id="navBtn" title="Animate along route">Start Navigation</button>
@@ -101,6 +102,17 @@
   const navSpeed = document.getElementById('navSpeed');
   const assignmentBadge = document.getElementById('assignmentBadge');
   const optBtn = document.getElementById('optBtn');
+  const apiKeyInput = document.getElementById('apiKey');
+  const apiKeyLabel = document.getElementById('apiKeyLabel');
+  const INTERNAL_TT_API_KEY = String(window.__TOMTOM_API_KEY ?? '5XhvsvuYwIVaIs9EJdyaQMu20vl0ScpL').trim();
+
+  function revealApiKeyControls(){
+    if(apiKeyLabel){ apiKeyLabel.classList.remove('is-hidden'); }
+    if(apiKeyInput){
+      apiKeyInput.classList.remove('is-hidden');
+      if(apiKeyInput.type === 'hidden'){ apiKeyInput.type = 'password'; }
+    }
+  }
 
   let map, markers = [], routeLayers = [];
   let apiKeyGlobal = '';
@@ -228,9 +240,10 @@
     if(!apiKey){ alert('Enter your TomTom API key'); return; }
     // Store key and mask field
     try{ localStorage.setItem('TT_API_KEY', apiKey); }catch{}
-    const apiKeyEl = document.getElementById('apiKey');
-    apiKeyEl.type = 'password';
-    apiKeyEl.value = apiKey;
+    if(apiKeyInput){
+      if(apiKeyInput.type === 'hidden'){ apiKeyInput.type = 'password'; }
+      apiKeyInput.value = apiKey;
+    }
     apiKeyGlobal = apiKey;
     tt.setProductInfo("RouteViewer","1.0.0");
     map = tt.map({
@@ -442,6 +455,7 @@
         const msg = String(e?.error?.message || e?.error || 'Map error');
         if(/401|403/.test(msg)){
           alert('TomTom tiles failed (401/403). Check API key permissions and allowed domains for localhost/127.0.0.1.');
+          revealApiKeyControls();
         } else {
           console.warn('Map error:', e);
         }
@@ -881,7 +895,7 @@
   
 
   document.getElementById('loadBtn').onclick = async () => {
-    const key = document.getElementById('apiKey').value.trim();
+    const key = apiKeyInput ? apiKeyInput.value.trim() : '';
     if(map && apiKeyGlobal === key){
       // Only load request points + vehicles; do NOT load routes yet
       await loadRequestPoints();
@@ -899,14 +913,30 @@
     await loadOptimizedRoutes();
   };
   // Pressing Enter in the API key field triggers Load
-  document.getElementById('apiKey').addEventListener('keydown', (e) => {
-    if(e.key === 'Enter') document.getElementById('loadBtn').click();
-  });
-  // Restore stored key (masked), do not auto-load
+  if(apiKeyInput){
+    apiKeyInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter') document.getElementById('loadBtn').click();
+    });
+  }
+  // Seed API key from internal default or storage and auto-load map
+  let storedApiKey = '';
   try{
-    const saved = localStorage.getItem('TT_API_KEY');
-    if(saved){ const el = document.getElementById('apiKey'); el.type = 'password'; el.value = saved; }
+    storedApiKey = localStorage.getItem('TT_API_KEY') || '';
   }catch{}
+  const autoApiKey = INTERNAL_TT_API_KEY || storedApiKey;
+  if(apiKeyInput && autoApiKey){
+    apiKeyInput.value = autoApiKey;
+  }
+  if(autoApiKey){
+    try{
+      if(!map){ await boot(autoApiKey); }
+    }catch(e){
+      console.error('Auto boot failed', e);
+      revealApiKeyControls();
+    }
+  } else {
+    revealApiKeyControls();
+  }
   if(sdkSource && sdkSource !== 'primary'){
     const badge = document.getElementById('meta');
     badge.textContent += ` | sdk: ${sdkSource}`;
