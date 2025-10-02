@@ -181,6 +181,42 @@ async def websocket_endpoint(websocket: WebSocket):
         logging.exception("WS error: %s", exc)
         await manager.disconnect(websocket)
 
+@app.websocket("/order/status")
+async def websocket_order_status(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            msg = await websocket.receive_text()
+            try:
+                data = json.loads(msg)
+                order_id = data.get("order-id")
+                status = data.get("status")
+                if not order_id or not status:
+                    await websocket.send_text("Missing order-id or status")
+                    continue
+
+                logging.info("Received order update: order-id=%s, status=%s", order_id, status)
+
+                # Invoke external Python script
+                script_path = "/home/devuser/netstar-logistics-hub/update_order_status.py"
+                python_bin = "/home/devuser/netstar-logistics-hub/.venv/bin/python3"
+                cmd = [python_bin, script_path, order_id, status, "--by-order-number"]
+
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                    logging.info("Script output: %s", result.stdout.strip())
+                    await websocket.send_text(f"Logged order {order_id} with status {status}")
+                except subprocess.CalledProcessError as e:
+                    logging.error("Script error: %s", e.stderr.strip())
+                    await websocket.send_text(f"Failed to log order {order_id}")
+
+            except json.JSONDecodeError:
+                await websocket.send_text("Invalid message format, expected JSON with order-id and status")
+    except WebSocketDisconnect:
+        logging.info("WS /order/status disconnected")
+    except Exception as e:
+        logging.exception("WS /order/status error: %s", e)
+        await websocket.close()
 
 @app.post("/api/start-navigation")
 async def api_start_navigation(req: StartNavigationRequest):
