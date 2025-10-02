@@ -7,6 +7,8 @@ from fastapi.staticfiles import StaticFiles
 import json, os, re, glob, time, asyncio
 from pydantic import BaseModel
 from .utils import nb_to_geojson, summarize
+from fastapi import FastAPI, Response, Query, HTTPException, UploadFile, File as FF, WebSocket, WebSocketDisconnect
+import json, os, glob, time, asyncio, subprocess
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 DATA_DIR = os.path.join(ROOT, "data")
@@ -20,27 +22,39 @@ _DATA_CACHE: dict[str, tuple[float, dict]] = {}
 
 class ConnectionManager:
     def __init__(self) -> None:
-        self._connections: dict[str, WebSocket] = {}
+        self._connections: list[WebSocket] = []
         self._lock = asyncio.Lock()
 
-    async def connect(self, device_id: str, websocket: WebSocket) -> None:
+    async def connect(self, websocket: WebSocket) -> None:
         await websocket.accept()
         async with self._lock:
-            self._connections[device_id] = websocket
-        logging.info("WS connected: %s", device_id)
+            if websocket not in self._connections:
+                self._connections.append(websocket)
+        logging.info("WS connected. active=%s", len(self._connections))
 
-    async def disconnect(self, device_id: str) -> None:
+    async def disconnect(self, websocket: WebSocket) -> None:
         async with self._lock:
-            self._connections.pop(device_id, None)
-        logging.info("WS disconnected: %s", device_id)
+            if websocket in self._connections:
+                self._connections.remove(websocket)
+        logging.info("WS disconnected. active=%s", len(self._connections))
 
-    async def send_to(self, device_id: str, payload: dict) -> None:
+    async def broadcast(self, payload: dict) -> int:
         async with self._lock:
-            websocket = self._connections.get(device_id)
-        if websocket is None:
-            raise KeyError(device_id)
-        await websocket.send_json(payload)
-        logging.info("WS message sent to %s: %s", device_id, payload)
+            targets = list(self._connections)
+        if not targets:
+            raise RuntimeError("No active connections")
+        sent = 0
+        for ws in targets:
+            try:
+                await ws.send_json(payload)
+                sent += 1
+            except Exception as exc:
+                logging.warning("WS send failed, dropping connection: %s", exc)
+                await self.disconnect(ws)
+        if sent == 0:
+            raise RuntimeError("No active connections")
+        logging.info("WS broadcast to %s connection(s): %s", sent, payload)
+        return sent
 
 
 manager = ConnectionManager()
@@ -129,7 +143,6 @@ app.mount("/static", StaticFiles(directory=FRONTEND_PATH), name="static")
 
 
 class StartNavigationRequest(BaseModel):
-    device_id: str
     route_id: str
 
 @app.get("/", response_class=HTMLResponse)
@@ -152,6 +165,35 @@ def favicon():
     return Response(status_code=204, media_type="image/x-icon")
 
 # Removed CDN proxy endpoints since SDK is self-hosted under /static/vendor/tomtom
+
+
+# ---- Merged from main1.py: missing routes added ----
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        await manager.disconnect(websocket)
+    except Exception as exc:
+        logging.exception("WS error: %s", exc)
+        await manager.disconnect(websocket)
+
+
+@app.post("/api/start-navigation")
+async def api_start_navigation(req: StartNavigationRequest):
+    payload = {
+        "type": "start_navigation",
+        "route_id": req.route_id,
+        "ts": time.time(),
+    }
+    try:
+        recipients = await manager.broadcast(payload)
+    except RuntimeError:
+        raise HTTPException(status_code=404, detail="No connected devices")
+    return JSONResponse({"sent": True, "recipients": recipients})
 
 @app.get("/api/summary")
 def api_summary(version: int | None = Query(default=None), file: str | None = Query(default=None), set: int | None = Query(default=None)):
@@ -424,21 +466,16 @@ def api_data_files():
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    device_id = websocket.query_params.get("device_id")
-    if not device_id:
-        await websocket.close(code=4000)
-        logging.warning("WS rejected: missing device_id")
-        return
-    await manager.connect(device_id, websocket)
+    await manager.connect(websocket)
     try:
         while True:
             # Consume incoming messages to keep the connection alive; payload ignored.
             await websocket.receive_text()
     except WebSocketDisconnect:
-        await manager.disconnect(device_id)
+        await manager.disconnect(websocket)
     except Exception as exc:
-        logging.exception("WS error for %s: %s", device_id, exc)
-        await manager.disconnect(device_id)
+        logging.exception("WS error: %s", exc)
+        await manager.disconnect(websocket)
 
 
 @app.post("/api/start-navigation")
@@ -449,7 +486,7 @@ async def api_start_navigation(req: StartNavigationRequest):
         "ts": time.time(),
     }
     try:
-        await manager.send_to(req.device_id, payload)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="Device not connected")
-    return JSONResponse({"sent": True})
+        recipients = await manager.broadcast(payload)
+    except RuntimeError:
+        raise HTTPException(status_code=404, detail="No connected devices")
+    return JSONResponse({"sent": True, "recipients": recipients})

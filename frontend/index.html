@@ -126,10 +126,10 @@
   }
 
   const driverRouteMap = {
-    vanjhb01: { routeId: 'route-1', deviceId: 'emulator-5554' },
-    vanct01: { routeId: 'route-2', deviceId: 'emulator-5554' },
-    vanpta01: { routeId: 'route-3', deviceId: 'emulator-5554' },
-    vandbn01: { routeId: 'route-4', deviceId: 'emulator-5554' },
+    vanjhb01: 'route-1',
+    vanct01: 'route-2',
+    vanpta01: 'route-3',
+    vandbn01: 'route-4',
   };
 
   function query(){
@@ -748,7 +748,7 @@
         const response = await fetch('/api/start-navigation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ device_id: mapping.deviceId, route_id: mapping.routeId }),
+          body: JSON.stringify({ route_id: mapping }),
         });
         if(!response.ok){
           const err = await response.json().catch(() => ({}));

@@ -33,7 +33,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now fastapi-https@USER
 ```
 
-- WebSocket clients connect using `wss://110.238.78.42/ws?device_id=<DEVICE_ID>`.
+- WebSocket clients connect using `wss://110.238.78.42/ws`.
 - Frontend/API calls stay same-origin at `https://110.238.78.42/api/...` (e.g. `start-navigation`).
 - See `scripts/verify_https_wss.py` for a simple connectivity check.
 

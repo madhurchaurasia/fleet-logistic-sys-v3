@@ -5,7 +5,7 @@ from http.client import HTTPSConnection
 
 HOST = os.environ.get("PUBLIC_IP", "110.238.78.42")
 PORT = int(os.environ.get("HTTPS_PORT", "443"))
-WSS_PATH = "/ws?device_id=healthcheck"
+WSS_PATH = "/ws"
 
 
 def check_tcp_port():

@@ -35,6 +35,4 @@ cd "$(dirname "$0")/.."
 
 echo "Starting Uvicorn on 0.0.0.0:${PORT} with TLS"
 python3 -m uvicorn backend.app.main:app \
-  --host 0.0.0.0 --port "${PORT}" \
-  --ssl-keyfile "${KEY_PATH}" \
-  --ssl-certfile "${CRT_PATH}"
+  --host 0.0.0.0 --port "${PORT}" 
