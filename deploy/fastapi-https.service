@@ -1,0 +1,19 @@
+[Unit]
+Description=FastAPI (Uvicorn) HTTPS on 443
+After=network.target
+
+[Service]
+User=%i
+Environment=PUBLIC_IP=110.238.78.42
+Environment=HTTPS_PORT=443
+Environment=SSL_KEY_FILE=/etc/ssl/private/app.key
+Environment=SSL_CERT_FILE=/etc/ssl/certs/app.crt
+# Update the WorkingDirectory to the absolute path of this repository for your user.
+WorkingDirectory=%h/Documents/GeoInt_projects/Working/version-4/fleet-logistic-sys-v3
+ExecStart=/usr/bin/python3 -m uvicorn backend.app.main:app --host 0.0.0.0 --port 443 \
+  --ssl-keyfile /etc/ssl/private/app.key \
+  --ssl-certfile /etc/ssl/certs/app.crt
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

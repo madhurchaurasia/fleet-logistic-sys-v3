@@ -22,6 +22,21 @@ uvicorn app.main:app --reload
 ```
 Then open http://127.0.0.1:8000/ and enter your **TomTom API key**.
 
+## HTTPS/WSS deployment quick start
+```bash
+# one-time cert + run (foreground)
+bash scripts/setup_tls_and_run.sh
+
+# or install systemd (replace USER with your linux user)
+sudo cp deploy/fastapi-https.service /etc/systemd/system/fastapi-https@USER.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now fastapi-https@USER
+```
+
+- WebSocket clients connect using `wss://110.238.78.42/ws?device_id=<DEVICE_ID>`.
+- Frontend/API calls stay same-origin at `https://110.238.78.42/api/...` (e.g. `start-navigation`).
+- See `scripts/verify_https_wss.py` for a simple connectivity check.
+
 > Data files
 > - Place one or more files under `backend/data/` named `nextbillion_response.json`, `nextbillion_response_1.json`, `nextbillion_response_2.json`, ...
 > - By default, the server auto-selects the latest numbered file (highest suffix). If none exist, it falls back to the base `nextbillion_response.json`.
