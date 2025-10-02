@@ -499,30 +499,3 @@ def api_data_files():
         "default": default_name,
     })
 
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            # Consume incoming messages to keep the connection alive; payload ignored.
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        await manager.disconnect(websocket)
-    except Exception as exc:
-        logging.exception("WS error: %s", exc)
-        await manager.disconnect(websocket)
-
-
-@app.post("/api/start-navigation")
-async def api_start_navigation(req: StartNavigationRequest):
-    payload = {
-        "type": "start_navigation",
-        "route_id": req.route_id,
-        "ts": time.time(),
-    }
-    try:
-        recipients = await manager.broadcast(payload)
-    except RuntimeError:
-        raise HTTPException(status_code=404, detail="No connected devices")
-    return JSONResponse({"sent": True, "recipients": recipients})
