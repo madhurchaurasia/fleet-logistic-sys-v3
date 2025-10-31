@@ -218,6 +218,42 @@ async def websocket_order_status(websocket: WebSocket):
         logging.exception("WS /order/status error: %s", e)
         await websocket.close()
 
+@app.websocket("/driver/deviation_counter")
+async def websocket_driver_deviation_counter(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            msg = await websocket.receive_text()
+            try:
+                data = json.loads(msg)
+                driver_id = data.get("driver-id")
+                counter = data.get("counter")
+                if driver_id != "Driver-1" or counter is None:
+                    await websocket.send_text("Missing driver-id or counter")
+                    continue
+
+                logging.info("Received deviation update: driver-id=%s, counter=%s", driver_id, counter)
+
+                script_path = "/home/devuser/netstar-logistics-hub/update_driver-info.py"
+                python_bin = "/home/devuser/netstar-logistics-hub/.venv/bin/python3"
+                cmd = [python_bin, script_path, driver_id, str(counter)]
+
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                    logging.info("Driver info script output: %s", result.stdout.strip())
+                    await websocket.send_text(f"Logged deviation for {driver_id} with counter {counter}")
+                except subprocess.CalledProcessError as e:
+                    logging.error("Driver info script error: %s", e.stderr.strip())
+                    await websocket.send_text(f"Failed to log deviation for {driver_id}")
+
+            except json.JSONDecodeError:
+                await websocket.send_text("Invalid message format, expected JSON with driver-id and counter")
+    except WebSocketDisconnect:
+        logging.info("WS /driver/deviation_counter disconnected")
+    except Exception as e:
+        logging.exception("WS /driver/deviation_counter error: %s", e)
+        await websocket.close()
+
 @app.post("/api/start-navigation")
 async def api_start_navigation(req: StartNavigationRequest):
     payload = {
@@ -498,4 +534,3 @@ def api_data_files():
         "files": [{"name": f["name"], "version": f["version"]} for f in files],
         "default": default_name,
     })
-
